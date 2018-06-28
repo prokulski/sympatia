@@ -49,10 +49,9 @@ plot_bars <-  function(f_cecha, f_flip = FALSE, f_sort = TRUE) {
 }
 
 plot_heatmap <- function(f_cechaA, f_cechaB) {
-  full_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
+  inner_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
             profile_df %>% filter(cecha == f_cechaB) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
             by = "nick") %>%
-    na.omit() %>%
     set_names(c("a", "nick", "b")) %>%
     count(a, b) %>%
     ungroup() %>%
@@ -71,10 +70,9 @@ plot_heatmap <- function(f_cechaA, f_cechaB) {
 }
 
 plot_bars_top <- function(f_cechaA, f_cechaB) {
-  full_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
+  inner_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
             profile_df %>% filter(cecha == f_cechaB) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
             by = "nick") %>%
-    na.omit() %>%
     set_names(c("a", "nick", "b")) %>%
     count(a, b) %>%
     filter(a != "", b != "") %>%
@@ -105,7 +103,7 @@ plot_bars_top <- function(f_cechaA, f_cechaB) {
 plot_bars("Wiek", f_sort = FALSE)
 
 plot_density("Wzrost")
-plot_bars("Wzrost", f_sort = FALSE)
+plot_bars("Wzrost", f_sort = FALSE, f_flip = TRUE)
 
 plot_bars("Wykształcenie")
 plot_bars("Miasto", f_flip = TRUE)
