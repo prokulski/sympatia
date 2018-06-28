@@ -5,6 +5,8 @@ library(jsonlite)
 #### LOGOWANIE ----
 
 # login i hasło do serwisu
+# sympatia_login = "***"
+# sympatia_pass = "***"
 load("sympatia_cred.Rda")
 
 base_url <- "https://sympatia.onet.pl"
