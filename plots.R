@@ -1,21 +1,19 @@
 #### FUNKCJE RYSUJACE WYKRESY ----
 library(tidyverse)
 
-plot_histogram <- function(f_cecha) {
-  profile_df %>%
-    filter(cecha == f_cecha) %>%
-    mutate(wartosc = as.numeric(wartosc)) %>%
-    ggplot() +
-    geom_histogram(aes(wartosc), binwidth = 1)
-}
-
 plot_density <- function(f_cecha) {
   profile_df %>%
     filter(cecha == f_cecha) %>%
     mutate(wartosc = as.numeric(wartosc)) %>%
     ggplot() +
-    geom_density(aes(wartosc), fill = "lightblue", color = "gray50")
+    geom_density(aes(wartosc), fill = "lightblue", color = "gray50") +
+    labs(title = "",
+         x = f_cecha, y = "",
+         subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
 }
+
+
 
 plot_bars <-  function(f_cecha, f_flip = FALSE, f_sort = TRUE, numbers = TRUE) {
   p <- profile_df %>%
@@ -45,10 +43,21 @@ plot_bars <-  function(f_cecha, f_flip = FALSE, f_sort = TRUE, numbers = TRUE) {
 
   if(f_flip) p <- p + coord_flip()
 
+
+  p <- p + labs(title = "",
+                x = f_cecha, y = "% profili",
+                subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+                caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+
+
   return(p)
 }
 
-plot_heatmap <- function(f_cechaA, f_cechaB, numbers = TRUE) {
+
+
+plot_heatmap <- function(f_cechaA, f_cechaB,
+                         numbers = TRUE,
+                         a_numeric = FALSE, b_numeric = FALSE) {
   plot_data <- inner_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
                           profile_df %>% filter(cecha == f_cechaB) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
                           by = "nick") %>%
@@ -61,6 +70,9 @@ plot_heatmap <- function(f_cechaA, f_cechaB, numbers = TRUE) {
     ungroup() %>%
     arrange(desc(b)) %>% mutate(b = fct_inorder(b))
 
+  if(a_numeric) plot_data <- plot_data %>% mutate(a = as.numeric(a))
+  if(b_numeric) plot_data <- plot_data %>% mutate(b = as.numeric(b))
+
   if(numbers) {
     plot_data %>%
       ggplot() +
@@ -69,16 +81,24 @@ plot_heatmap <- function(f_cechaA, f_cechaB, numbers = TRUE) {
       scale_fill_distiller(palette = "RdYlGn") +
       scale_color_manual(values = c("TRUE" = "darkred", "FALSE" = "gray30")) +
       scale_size_manual(values = c("TRUE" = 4, "FALSE" = 3)) +
-      labs(x = f_cechaA, y = f_cechaB)
+      labs(title = "",
+           x = f_cechaA, y = f_cechaB,
+           subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+           caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
   } else {
     plot_data %>%
       ggplot() +
       geom_tile(aes(a, b, fill = p, color = m), show.legend = FALSE) +
       scale_fill_distiller(palette = "RdYlGn") +
       scale_color_manual(values = c("TRUE" = "darkred", "FALSE" = "gray30")) +
-      labs(x = f_cechaA, y = f_cechaB)
+      labs(title = "",
+           x = f_cechaA, y = f_cechaB,
+           subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+           caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
   }
 }
+
+
 
 plot_bars_top <- function(f_cechaA, f_cechaB, n_col = 4) {
   inner_join(profile_df %>% filter(cecha == f_cechaA) %>% separate_rows(wartosc, sep = ",") %>% mutate(wartosc = trimws(wartosc)) %>% select(-cecha),
@@ -100,10 +120,12 @@ plot_bars_top <- function(f_cechaA, f_cechaB, n_col = 4) {
     geom_text(aes(a, p, label = sprintf("%.0f%%", p), size = m), hjust = -0.1, show.legend = FALSE) +
     facet_wrap(~b, scales = "free_y", ncol = n_col) +
     scale_y_continuous(expand = c(0.3, 0)) +
-    scale_color_manual(values = c("TRUE" = "red", "FALSE" = "blue")) +
-    scale_fill_manual(values = c("TRUE" = "darkred", "FALSE" = "lightblue")) +
+    scale_color_manual(values = c("TRUE" = "darkred", "FALSE" = "darkgreen")) +
+    scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "lightgreen")) +
     scale_size_manual(values = c("TRUE" = 3, "FALSE" = 2)) +
     coord_flip() +
-    labs(y = "% profili", x = "",
-         title = paste0("Najpopularniejsze ", f_cechaA, " według ", f_cechaB))
+    labs(title = paste0("Najpopularniejsze ", f_cechaA, " według ", f_cechaB),
+         x = f_cechaA, y = "% profili",
+         subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
 }

@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: 
   html_document: 
     fig_height: 6
-    fig_width: 10
+    fig_width: 9
     fig_align: "center"
     self_contained: no
 ---
@@ -30,7 +30,6 @@ theme_set(theme_minimal() +
                    panel.background = element_rect(fill = "white", color="black"),
                    strip.text.x = element_text(face = "bold")))
 ```
-
 ```{r echo=FALSE}
 library(tidyverse)
 
@@ -41,112 +40,101 @@ profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "pila "), "wa
 profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "Bielsko-Biała "), "wartosc"] <- "śląskie"
 
 nprofiles <- length(unique(profile_df$nick))
-```
 
-Mamy zgromadzonych `r nprofiles` profili.
-
-```{r echo=FALSE}
 #### FUNKCJE RYSUJACE WYKRESY ----
 source("plots.R")
 ```
 
-# Cechy ogólne
+Tym razem wpis z wykresami, a kody źródłowe znajdziecie na moim [GitHubie](https://github.com/prokulski/sympatia). Krótko mówiąc:
 
-Skąd pochodzą dziewczyny?
+* przygotowałem skrypt pobierający z [Sympatii](http://sympatia.onet.pl) profile kobiet (z Polski, w wieku 18-40 lat, logujących się w ciągu ostatniego miesiąca)
+* przygotowałem kilka funkcji rysujących poniższe wykresy
+* a teraz zrobimy przegląd zgromadzonych danych.
 
-```{r echo=FALSE}
+A udało się zgromadzić **`r nprofiles`** profili (w wynikach wyszukiwania spełniających kryteria było ponad 40 tysięcy profili).
+
+Taka próba badawcza jest wystarczająca (z dużą górką) do rozciągania wniosków na całą populację. Ale uwaga - populację użytkowniczek Sympatii, a nie wszystkich kobiet w Polsce! **Pamiętajmy**, że nie każdy jest obecny na serwisie randkowym, nie należy więc uogólniać. Bardzo chętnie udostępnię *łamy* osobie z doświadczeniem w badaniach socjologicznych - być może (ba, zapewne!) mój komentarz do prezentowanych danych nie ma potwierdzenia w rzeczywistości. Ot, zrobiłem kilka wykresów i opisuję co na nich widzę i jak to rozumiem.
+
+### Cechy ogólne
+
+
+#### Skąd pochodzą dziewczyny?
+
+```{r sympatia_01, echo=FALSE}
 plot_bars("Region", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Województwo z jakiego pochodzi właścicielka profilu", x = "")
 ```
 
-W jakim są wieku?
-```{r echo=FALSE}
+#### W jakim są wieku?
+
+```{r sympatia_02, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Wiek", f_sort = FALSE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Wiek właścicielki profilu")
 ```
 
-Spod jakiego znaku zodiaku?
-```{r echo=FALSE}
+#### Spod jakiego znaku zodiaku?
+
+```{r sympatia_03, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Znak zodiaku", f_sort = FALSE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Znak zodiaku właścicielki profilu", x = "")
 ```
 
-Czy są wolne czy z przeszłością?
-```{r echo=FALSE}
+#### Czy są wolne czy z przeszłością?
+
+```{r sympatia_04, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Stan cywilny", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stan cywilny właścicielki profilu", x = "")
 ```
 
-Czy mają dzieci?
-```{r echo=FALSE}
+#### Czy mają dzieci?
+
+```{r sympatia_05, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czy właścicielka profilu posiada dzieci?")
 ```
 
-Które mają dzieci?
-```{r echo=FALSE}
+#### Które mają dzieci?
+
+```{r sympatia_06, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Stan cywilny", "Dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Posiadanie dzieci a stan cywilny", x = "")
 ```
 
-Jakie mają wykształcenie?
-```{r echo=FALSE}
+#### Jakie mają wykształcenie?
+
+```{r sympatia_07, echo=FALSE}
 plot_bars("Wykształcenie", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Wykształcenie właścicielki profilu", x = "")
 ```
 
-Co robią?
-```{r echo=FALSE}
+#### Co robią?
+
+```{r sympatia_08, echo=FALSE}
 plot_bars("Zawód", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Zawód właścicielki profilu", x = "")
 ```
 
-Wyznanie
-```{r echo=FALSE}
+#### Wyznanie
+
+```{r sympatia_09, echo=FALSE}
 plot_bars("Wyznanie", f_flip = TRUE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Deklarowane wyznanie właścicielki profilu", x = "")
 ```
 
 
+### Wygląd
 
-# wygląd
-Jakiego są wzrostu?
-```{r echo=FALSE}
+
+#### Jakiego są wzrostu?
+
+```{r sympatia_10, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_density("Wzrost") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Wzrost właścicielki profilu", x = "Wzrost w cm", y = "Gęstość prawdopodobieństwa")
 ```
 
-```{r echo=FALSE}
+patrząc na rozkład widzimy, że połowa dzieczyn ma wzrost pomiędzy 164 a 170 cm, przy średniej (i jednocześnie medianie) 167 cm. Jedna czwarta jest wyższa niż 170 cm (albo niższa niż 164 cm)
+
+```{r sympatia_11, echo=FALSE}
 profile_df %>%
     filter(cecha == "Wzrost") %>%
     mutate(wartosc = as.numeric(wartosc)) %>%
@@ -154,458 +142,410 @@ profile_df %>%
     summary()
 ```
 
-Budowa ciała
-```{r echo=FALSE}
+#### Budowa ciała
+
+```{r sympatia_12, echo=FALSE}
 plot_bars("Budowa ciała", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Deklarowana budowa ciała właścicielki profilu", x = "")
 ```
 
-kolor oczu
-```{r echo=FALSE}
+#### kolor oczu
+
+```{r sympatia_13, echo=FALSE}
 plot_bars("Kolor oczu", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Kolor oczu właścicielki profilu", x = "")
 ```
 
-kolor włosów
-```{r echo=FALSE}
-plot_bars("Kolor włosów", f_flip = TRUE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+#### kolor włosów
+
+```{r sympatia_14, echo=FALSE}
+plot_bars("Kolor włosów", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Kolor włosów właścicielki profilu", x = "")
 ```
 
-kolor oczy - kolor włosów
-```{r echo=FALSE}
+#### kolor oczy - kolor włosów
+
+```{r sympatia_15, echo=FALSE}
 plot_heatmap("Kolor oczu", "Kolor włosów") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Popularność koloru włosów w zależności od koloru oczu")
 ```
 
-budowa ciałą w zależności od wzrostu
-```{r echo=FALSE}
-plot_heatmap("Wzrost", "Budowa ciała", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+#### budowa ciałą w zależności od wzrostu
+
+```{r sympatia_16, echo=FALSE, fig.height = 5, fig.width = 9}
+plot_heatmap("Wzrost", "Budowa ciała", numbers = FALSE, a_numeric = TRUE) +
+   labs(title = "Budowa ciała w zależności od wzrostu", x = "Wzrost w cm", y = "")
 ```
 
-budowa ciała - wiek
-```{r echo=FALSE}
+#### budowa ciała - wiek
+
+```{r sympatia_17, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wiek", "Budowa ciała", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Budowa ciała w zależności od wieku właścicielki profilu", x = "Wiek", y = "")
 ```
 
 
-# upodobania
-papierosy
-```{r echo=FALSE}
+### Używki
+
+
+#### papierosy
+
+```{r sympatia_18, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Papierosy", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek właścicielki profilu do papierosów", x = "")
 ```
 
-alkohol
-```{r echo=FALSE}
+#### alkohol
+
+```{r sympatia_19, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Alkohol", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek właścicielki profilu do alkoholu", x = "")
 ```
 
-papierosy - alkohol
-```{r echo=FALSE}
+#### papierosy - alkohol
+
+```{r sympatia_20, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Alkohol", "Papierosy") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek do papierosów w zależności od stosunku do alkoholu",
+        x = "Stosunek do alkoholu", y = "Stosunek do papierosów")
 ```
 
 
-# rodzina
-dzieci
-```{r echo=FALSE}
+### Rodzina i wartości
+
+
+#### dzieci
+
+```{r sympatia_21, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Posiadanie dzieci przez właścicielki profilu", x = "Czy masz dzieci?")
 ```
 
-chce dzieci
-```{r echo=FALSE}
+#### chce dzieci
+
+```{r sympatia_22, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Chce dzieci", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Chęć posiadania dzieci", x = "Czy chcesz mieć dzieci?")
 ```
 
-małżeństwo
-```{r echo=FALSE}
+#### małżeństwo
+
+```{r sympatia_23, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Małżeństwo", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek do małżeństwa", x = "Małżeństwo jest dla mnie...")
 ```
 
 
-# osobowość
-osobowość
-```{r echo=FALSE}
+### Osobowość - sama o sobie
+
+
+#### osobowość
+
+```{r sympatia_24, echo=FALSE}
 plot_bars("Osobowość", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Właścicielki profilu o sobie", x = "Jestem...")
 ```
 
-szukam
-```{r echo=FALSE}
+#### szukam
+
+```{r sympatia_25, echo=FALSE}
 plot_bars("Szukam", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czego szukają właścicielki profilu?", x = "Szukam...")
 ```
 
-osobowość - alkohol
-```{r echo=FALSE}
+#### osobowość - alkohol
+
+```{r sympatia_26, echo=FALSE}
 plot_heatmap("Alkohol", "Osobowość") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Osobowość w zależności od stosunku do alkoholu", x = "Alkohol...", y = "Jestem...")
 ```
 
-szukam - alkohol
-```{r echo=FALSE}
+#### szukam - alkohol
+
+```{r sympatia_27, echo=FALSE}
 plot_heatmap("Alkohol", "Szukam") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czego szuka właścicielka profilu a jej stosunek do alkoholu", x = "Alkohol...", y = "Szukam...")
 ```
 
+Większość szuka miłości, co już wiemy. Ale ciekawostka jest tutaj inna: Kobiety, które lubią alkohol szukają mężczyzn (33% z nich) bardziej niż miłości (31% z nich). Widać równieź, że im bardziej kobiety nie lubią alkoholu tym bardziej szukają miłości. Różnice są o prawda na poziomie 2 punktów procentowych, więc wniosek jest nieco naciągany.
 
-# poglądy
-małżeństwo - dzieci
-```{r echo=FALSE}
+### Poglądy
+
+
+#### małżeństwo - dzieci
+
+```{r sympatia_28, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Dzieci", "Małżeństwo") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek do małżeństwa w zależności od posiadania dzieci", x = "Dzieci...", y = "Małżeństwo...")
 ```
 
-małżeństwo - chce dzieci
-```{r echo=FALSE}
+#### małżeństwo - chce dzieci
+
+```{r sympatia_29, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Małżeństwo", "Chce dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Chęć posiadania dzieci w zależności od stosunku do małżeństwa",
+        x = "Małżeństwo jest dla mnie...", y = "Czy chcę mieć dzieci?")
 ```
 
-małżeństwo - wyznanie
-```{r echo=FALSE}
+Kobiety, dla których małżeństwo jest bardzo ważne chcą mieć dzieci (89% z nich). Te, które nie są zainteresowane małżeństwem nie są również zainteresowane posiadaniem dzieci.
+
+#### małżeństwo - wyznanie
+
+```{r sympatia_30, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wyznanie", "Małżeństwo") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek do małżeństwa a deklarowane wyznanie",
+        x = "Deklarowane wyznanie", y = "Małżeństwo jest dla mnie...")
 ```
 
-małżeństwo - stan cywilny
-```{r echo=FALSE}
+#### małżeństwo - stan cywilny
+
+```{r sympatia_31, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Stan cywilny", "Małżeństwo") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Stosunek do małżeństwa a stan cywilny właścicielki profilu", x = "", y = "Małżeństwo jest dla mnie...")
 ```
 
-wyznanie - chce dzieci
-```{r echo=FALSE}
+#### wyznanie - chce dzieci
+
+```{r sympatia_32, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wyznanie", "Chce dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Chęć posiadania dzieci a deklarowane wyznanie", x = "", y = "Chcę mieć dzieci?")
 ```
 
 
-# jaka jestem?
-ja sport
-```{r echo=FALSE}
+### Jaka jestem - co robię i lubię robić?
+
+
+#### ja sport
+
+```{r sympatia_33, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars("Ja Sport", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jakim sportem interesuje się właścicielka profilu?", x = "")
 ```
 
-ja czas wolny
-```{r echo=FALSE}
+#### ja czas wolny
+
+```{r sympatia_34, echo=FALSE}
 plot_bars("Ja Czas wolny", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jak lubi spędzać czas wolny właścicielka profilu?", x = "")
 ```
 
-ja zainteresowania
-```{r echo=FALSE}
+#### ja zainteresowania
+
+```{r sympatia_35, echo=FALSE}
 plot_bars("Ja Zainteresowania", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czym interesuje się właścicielka profilu?", x = "")
 ```
 
-ja film
-```{r echo=FALSE}
+#### ja film
+
+```{r sympatia_36, echo=FALSE}
 plot_bars("Ja Film", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jakie filmy lubi właścicielka profilu?", x = "")
 ```
 
-ja muzyka
-```{r echo=FALSE}
+#### ja muzyka
+
+```{r sympatia_37, echo=FALSE}
 plot_bars("Ja Muzyka", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jaką muzykę lubi właścicielka profilu?", x = "")
 ```
 
 
-# jaki powinien być partner?
-partner osobowość
-```{r echo=FALSE}
+### Jaki powinien być partner? Co lubić?
+
+
+#### partner osobowość
+
+```{r sympatia_38, echo=FALSE}
 plot_bars("Partner Osobowość", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jaki powinien być wymarzony partner?", x = "")
 ```
 
-partner sport
-```{r echo=FALSE}
+#### partner sport
+
+```{r sympatia_39, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars("Partner Sport", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jaki sport powinien uprawiać wymarzony partner?", x = "")
 ```
 
-partner czas wolny
-```{r echo=FALSE}
+#### partner czas wolny
+
+```{r sympatia_40, echo=FALSE}
 plot_bars("Partner Czas wolny", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jak wymarzony partner powinien spędzać czas wolny?", x = "")
 ```
 
-partner zainteresowania
-```{r echo=FALSE}
+#### partner zainteresowania
+
+```{r sympatia_41, echo=FALSE}
 plot_bars("Partner Zainteresowania", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czym powinien się interesować wymarzony partner?", x = "")
 ```
 
-partner film
-```{r echo=FALSE}
+#### partner film
+
+```{r sympatia_42, echo=FALSE}
 plot_bars("Partner Film", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jakie filmy powinien lubić wymarzony partner?", x = "")
 ```
 
-partner muzyka
-```{r echo=FALSE}
+#### partner muzyka
+
+```{r sympatia_43, echo=FALSE}
 plot_bars("Partner Muzyka", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jaką muzykę powinien lubić wymarzony partner?", x = "")
 ```
 
 
-# jaka jestem vs...
-Co mnie interesuje w zależności od tego czy mam dzieci?
-```{r echo=FALSE}
+### Jaka jestem w zależności od...
+
+
+#### Co mnie interesuje w zależności od tego czy mam dzieci?
+
+```{r sympatia_44, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_bars_top("Ja Zainteresowania", "Dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najpopularniejsze zainteresowania właścicielki profilu\nze względu na posiadanie dzieci", x = "")
 ```
 
-Czy stan cywilny ma wpływ na moje zainteresowania?
-```{r echo=FALSE}
+#### Czy stan cywilny ma wpływ na moje zainteresowania?
+
+```{r sympatia_45, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_heatmap("Stan cywilny", "Ja Zainteresowania") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Zainteresowania właścicielki profilu\nwedług jej stanu cywilnego", x = "", y = "Interesuje mnie...")
 ```
 
-ja zainteresowania - wykształcenie
-```{r echo=FALSE}
+#### ja zainteresowania - wykształcenie
+
+```{r sympatia_46, echo=FALSE}
 plot_bars_top("Ja Zainteresowania", "Wykształcenie") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najpopularniejsze zainteresowania właścicielki profilu\nw zależności od jej wykształcenia", x = "")
 ```
 
-ja muzyka - wykształenie
-```{r echo=FALSE}
+#### ja muzyka - wykształenie
+
+```{r sympatia_47, echo=FALSE}
 plot_heatmap("Wykształcenie", "Ja Muzyka", numbers = FALSE) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Ulubiony gatunek muzyczny w zależności od wykształcenia\nwłaścicielki profilu", x = "Wykształcenie", y = "")
 ```
 
-ja film - wykształenie
-```{r echo=FALSE}
+#### ja film - wykształenie
+
+```{r sympatia_48, echo=FALSE}
 plot_heatmap("Wykształcenie", "Ja Film") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Ulubione filmy w zależności od wykształcenia\nwłaścicielki profilu", x = "Wykształcenie", y = "")
 ```
 
-ja muzyka - osobowość
-```{r echo=FALSE}
+#### ja muzyka - osobowość
+
+```{r sympatia_49, echo=FALSE}
 plot_heatmap("Osobowość", "Ja Muzyka", numbers = FALSE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Ulubiony gatunek muzyczny w zależności od charakteru\nwłaścicielki profilu", x = "", y = "")
 ```
 
-ja zainteresowania - osobowość
-```{r echo=FALSE}
+#### ja zainteresowania - osobowość
+
+```{r sympatia_50, echo=FALSE}
 plot_heatmap("Osobowość", "Ja Zainteresowania", numbers = FALSE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Zainteresowania w zależności od charakteru\nwłaścicielki profilu", x = "", y = "")
 ```
 
-ja czas wolny - stan cywiliny
-```{r echo=FALSE}
+#### ja czas wolny - stan cywiliny
+
+```{r sympatia_51, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars_top("Ja Czas wolny", "Stan cywilny", n_col = 2) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najpopularniejszy sposób spędzania czasu wolnego\nprzez właścicielkę profilu w zależności\nod jej stanu cywilnego", x = "")
 ```
 
-ja czas wolny - wykształcenie
-```{r echo=FALSE}
+#### ja czas wolny - wykształcenie
+
+```{r sympatia_52, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars_top("Ja Czas wolny", "Wykształcenie", n_col = 2) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najpopularniejszy sposób spędzania czasu wolnego\nprzez właścicielkę profilu w zależności\nod jej wykształcenia", x = "")
 ```
 
 
-# ja vs partner
-ja sport - partner sport
-```{r echo=FALSE}
+### Co lubię ja i co powinien lubić partner?
+
+
+#### ja sport - partner sport
+
+```{r sympatia_53, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_heatmap("Ja Sport", "Partner Sport", numbers = FALSE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jaki sport powinien lubić partner w zależności\nod ulubionego sportu właścicielki profilu?",
+        x = "Ulubiony sport właścicielki profilu", y = "Ulubiony sport wymarzonego partnera")
 ```
 
-ja czas wolny - partner czas wolny
-```{r echo=FALSE}
+#### ja czas wolny - partner czas wolny
+
+```{r sympatia_54, echo=FALSE}
 plot_heatmap("Ja Czas wolny", "Partner Czas wolny") +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "W jaki sposób partner powinien spędzać czas wolny\nw zależności od ulubionego sposobu spędzania tego czasu\nprzez właścicielkę profilu?",
+        x = "Sposób spędzania wolnego czasu przez właścicielkę profilu", y = "Sposób spędzania wolnego czasu\nprzez wymarzonego partnera")
 ```
 
-osobowość - partner osobowość
-```{r echo=FALSE}
-plot_heatmap("Partner Osobowość", "Osobowość", numbers = FALSE) +
+#### osobowość - partner osobowość
+
+```{r sympatia_55, echo=FALSE}
+plot_heatmap("Osobowość", "Partner Osobowość", numbers = TRUE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Jakich cech oczekuję od partnera w zależności\nod mojego charakteru?", x = "Cechy właścicielki profilu", y = "Cechy partnera")
 ```
 
-ja zainteresowania - partner zainteresowania
-```{r echo=FALSE}
+
+Dziewczyny beztroskie nie chcą beztroskich partnerów (5% z nich chce), ale równocześnie nie szukają równowagi w postaci partnerów *zrównoważonych* (6% beztroskich kobiet wskazało cechę *zrównoważony* jako porządaną).
+
+
+#### ja zainteresowania - partner zainteresowania
+
+```{r sympatia_56, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_heatmap("Ja Zainteresowania", "Partner Zainteresowania", numbers = FALSE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Czym powinien interesować się wymarzony partner\nw zależności od zainteresowania właścicielki profilu?",
+        y = "Porządane zainteresowania partnera", x = "Zainteresowania właścicielki profilu")
 ```
 
+Ogólnie rzecz biorąc każdy facet powinien się interesować podróżami. Cokolwiek by to nie znaczyło - oglądać National Geographic czy Travel Channel? A może (co bardziej prawdopodobne) wyjeżdżać i zwiedzać świat... razem z *właścicielką profilu*.
 
-# partner vs ja
-partner zainteresowania - dzieci
-```{r echo=FALSE}
+
+### Cechy partnera w zależności od mojej sytuacji
+
+
+#### partner zainteresowania - dzieci
+
+```{r sympatia_57, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_bars_top("Partner Zainteresowania", "Dzieci") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najbardziej porządane zainteresowania partnera w zależności\nod posiadania dzieci przez właścicielkę profilu", x = "")
 ```
 
-partner zainteresowania - wykształcenie
-```{r echo=FALSE}
+
+#### partner zainteresowania - wykształcenie
+
+```{r sympatia_58, echo=FALSE}
 plot_bars_top("Partner Zainteresowania", "Wykształcenie") +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najbardziej porządane zainteresowania partnera w zależności\nod wykształcenia właścicielki profilu", x = "")
 ```
 
-osobowość partnera w zależności od tego czego szukam
-```{r echo=FALSE}
+#### osobowość partnera w zależności od tego czego szukam
+
+```{r sympatia_59, echo=FALSE}
 plot_bars_top("Partner Osobowość", "Szukam", n_col = 3) +
-   labs(title = "",
-        x = "", y = "",
-        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+   labs(title = "Najbardziej porządane cechy partnera w zależności\nod celu poszukiwań partnera", x = "")
 ```
+
+Widzieliśmy już wcześniej, że najbardziej porządana przez kobiety cecha u mężczyzn to czułość. Ale te, które szukają przygód wolą facetów dowcipnych.
+
+
+
+```{r sympatia_60, echo = FALSE}
+plot_heatmap("Wiek", "Partner Osobowość") +
+   labs(title = "Najbardziej porządane cechy partnera w zależności\nod wieku właścicielki profilu",
+        x = "Wiek właścicielki profilu", y = "Partner powinien być...")
+```
+
+Znowu - przede wszystkim czuły. Ale chęć posiadania romantycznego partnera mija z wiekiem (może nieznacznie - o około jeden punkt procentowy - ale widocznie). Najbardziej romantycznych partnerów porządają 20-latki (12% z nich, romantyzm to najważniejsza dla nich cecha). Im Kobieta starsza tym bardziej docenia zrównoważenie: 5% 18-latek vs 10% 37-latek.
