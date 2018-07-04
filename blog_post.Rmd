@@ -1,0 +1,611 @@
+---
+title: "Dziewczyny z Sympatii"
+author: "Łukasz Prokulski"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    fig_height: 6
+    fig_width: 10
+    fig_align: "center"
+    self_contained: no
+---
+
+Jakie są dziewczyny z Sympatii? Czego szukają?
+
+```{r document_setup, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# chunks options
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE)
+options(knitr.table.format = "html") 
+
+# some better colours theme :)
+theme_set(theme_minimal() +
+             theme(plot.title = element_text(family = NULL, face = "bold", size = 18, color = "black"),
+                   plot.subtitle = element_text(family = NULL, face = "plain", size = 9, color = "black"),
+                   plot.caption = element_text(family = NULL, face = "italic", size = 9, color = "darkgray"),
+                   plot.background = element_rect(fill="#efefef", color="#aaaaaa"),
+                   panel.background = element_rect(fill = "white", color="black"),
+                   strip.text.x = element_text(face = "bold")))
+```
+
+```{r echo=FALSE}
+library(tidyverse)
+
+profile_df <- readRDS("grabed_profiles.RDS") %>% distinct() %>% filter(nchar(wartosc) != 0)
+
+# korekty wpisanych regionów
+profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "pila "), "wartosc"] <- "wielkopolskie"
+profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "Bielsko-Biała "), "wartosc"] <- "śląskie"
+
+nprofiles <- length(unique(profile_df$nick))
+```
+
+Mamy zgromadzonych `r nprofiles` profili.
+
+```{r echo=FALSE}
+#### FUNKCJE RYSUJACE WYKRESY ----
+source("plots.R")
+```
+
+# Cechy ogólne
+
+Skąd pochodzą dziewczyny?
+
+```{r echo=FALSE}
+plot_bars("Region", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+W jakim są wieku?
+```{r echo=FALSE}
+plot_bars("Wiek", f_sort = FALSE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Spod jakiego znaku zodiaku?
+```{r echo=FALSE}
+plot_bars("Znak zodiaku", f_sort = FALSE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Czy są wolne czy z przeszłością?
+```{r echo=FALSE}
+plot_bars("Stan cywilny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Czy mają dzieci?
+```{r echo=FALSE}
+plot_bars("Dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Które mają dzieci?
+```{r echo=FALSE}
+plot_heatmap("Stan cywilny", "Dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Jakie mają wykształcenie?
+```{r echo=FALSE}
+plot_bars("Wykształcenie", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Co robią?
+```{r echo=FALSE}
+plot_bars("Zawód", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Wyznanie
+```{r echo=FALSE}
+plot_bars("Wyznanie", f_flip = TRUE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+
+# wygląd
+Jakiego są wzrostu?
+```{r echo=FALSE}
+plot_density("Wzrost") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+```{r echo=FALSE}
+profile_df %>%
+    filter(cecha == "Wzrost") %>%
+    mutate(wartosc = as.numeric(wartosc)) %>%
+    pull(wartosc) %>%
+    summary()
+```
+
+Budowa ciała
+```{r echo=FALSE}
+plot_bars("Budowa ciała", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+kolor oczu
+```{r echo=FALSE}
+plot_bars("Kolor oczu", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+kolor włosów
+```{r echo=FALSE}
+plot_bars("Kolor włosów", f_flip = TRUE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+kolor oczy - kolor włosów
+```{r echo=FALSE}
+plot_heatmap("Kolor oczu", "Kolor włosów") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+budowa ciałą w zależności od wzrostu
+```{r echo=FALSE}
+plot_heatmap("Wzrost", "Budowa ciała", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+budowa ciała - wiek
+```{r echo=FALSE}
+plot_heatmap("Wiek", "Budowa ciała", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# upodobania
+papierosy
+```{r echo=FALSE}
+plot_bars("Papierosy", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+alkohol
+```{r echo=FALSE}
+plot_bars("Alkohol", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+papierosy - alkohol
+```{r echo=FALSE}
+plot_heatmap("Alkohol", "Papierosy") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# rodzina
+dzieci
+```{r echo=FALSE}
+plot_bars("Dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+chce dzieci
+```{r echo=FALSE}
+plot_bars("Chce dzieci", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+małżeństwo
+```{r echo=FALSE}
+plot_bars("Małżeństwo", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# osobowość
+osobowość
+```{r echo=FALSE}
+plot_bars("Osobowość", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+szukam
+```{r echo=FALSE}
+plot_bars("Szukam", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+osobowość - alkohol
+```{r echo=FALSE}
+plot_heatmap("Alkohol", "Osobowość") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+szukam - alkohol
+```{r echo=FALSE}
+plot_heatmap("Alkohol", "Szukam") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# poglądy
+małżeństwo - dzieci
+```{r echo=FALSE}
+plot_heatmap("Dzieci", "Małżeństwo") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+małżeństwo - chce dzieci
+```{r echo=FALSE}
+plot_heatmap("Małżeństwo", "Chce dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+małżeństwo - wyznanie
+```{r echo=FALSE}
+plot_heatmap("Wyznanie", "Małżeństwo") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+małżeństwo - stan cywilny
+```{r echo=FALSE}
+plot_heatmap("Stan cywilny", "Małżeństwo") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+wyznanie - chce dzieci
+```{r echo=FALSE}
+plot_heatmap("Wyznanie", "Chce dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# jaka jestem?
+ja sport
+```{r echo=FALSE}
+plot_bars("Ja Sport", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja czas wolny
+```{r echo=FALSE}
+plot_bars("Ja Czas wolny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja zainteresowania
+```{r echo=FALSE}
+plot_bars("Ja Zainteresowania", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja film
+```{r echo=FALSE}
+plot_bars("Ja Film", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja muzyka
+```{r echo=FALSE}
+plot_bars("Ja Muzyka", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# jaki powinien być partner?
+partner osobowość
+```{r echo=FALSE}
+plot_bars("Partner Osobowość", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner sport
+```{r echo=FALSE}
+plot_bars("Partner Sport", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner czas wolny
+```{r echo=FALSE}
+plot_bars("Partner Czas wolny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner zainteresowania
+```{r echo=FALSE}
+plot_bars("Partner Zainteresowania", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner film
+```{r echo=FALSE}
+plot_bars("Partner Film", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner muzyka
+```{r echo=FALSE}
+plot_bars("Partner Muzyka", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# jaka jestem vs...
+Co mnie interesuje w zależności od tego czy mam dzieci?
+```{r echo=FALSE}
+plot_bars_top("Ja Zainteresowania", "Dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Czy stan cywilny ma wpływ na moje zainteresowania?
+```{r echo=FALSE}
+plot_heatmap("Stan cywilny", "Ja Zainteresowania") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja zainteresowania - wykształcenie
+```{r echo=FALSE}
+plot_bars_top("Ja Zainteresowania", "Wykształcenie") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja muzyka - wykształenie
+```{r echo=FALSE}
+plot_heatmap("Wykształcenie", "Ja Muzyka", numbers = FALSE) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja film - wykształenie
+```{r echo=FALSE}
+plot_heatmap("Wykształcenie", "Ja Film") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja muzyka - osobowość
+```{r echo=FALSE}
+plot_heatmap("Osobowość", "Ja Muzyka", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja zainteresowania - osobowość
+```{r echo=FALSE}
+plot_heatmap("Osobowość", "Ja Zainteresowania", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja czas wolny - stan cywiliny
+```{r echo=FALSE}
+plot_bars_top("Ja Czas wolny", "Stan cywilny", n_col = 2) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja czas wolny - wykształcenie
+```{r echo=FALSE}
+plot_bars_top("Ja Czas wolny", "Wykształcenie", n_col = 2) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# ja vs partner
+ja sport - partner sport
+```{r echo=FALSE}
+plot_heatmap("Ja Sport", "Partner Sport", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja czas wolny - partner czas wolny
+```{r echo=FALSE}
+plot_heatmap("Ja Czas wolny", "Partner Czas wolny") +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+osobowość - partner osobowość
+```{r echo=FALSE}
+plot_heatmap("Partner Osobowość", "Osobowość", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+ja zainteresowania - partner zainteresowania
+```{r echo=FALSE}
+plot_heatmap("Ja Zainteresowania", "Partner Zainteresowania", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+# partner vs ja
+partner zainteresowania - dzieci
+```{r echo=FALSE}
+plot_bars_top("Partner Zainteresowania", "Dzieci") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+partner zainteresowania - wykształcenie
+```{r echo=FALSE}
+plot_bars_top("Partner Zainteresowania", "Wykształcenie") +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+osobowość partnera w zależności od tego czego szukam
+```{r echo=FALSE}
+plot_bars_top("Partner Osobowość", "Szukam", n_col = 3) +
+   labs(title = "",
+        x = "", y = "",
+        subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
+        caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
