@@ -10,7 +10,7 @@ plot_density <- function(f_cecha) {
     labs(title = "",
          x = f_cecha, y = "",
          subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+         caption = "(c) Lukasz Prokulski, fb.com/DaneAnalizy")
 }
 
 
@@ -47,7 +47,7 @@ plot_bars <-  function(f_cecha, f_flip = FALSE, f_sort = TRUE, numbers = TRUE) {
   p <- p + labs(title = "",
                 x = f_cecha, y = "% profili",
                 subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-                caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+                caption = "(c) Lukasz Prokulski, fb.com/DaneAnalizy")
 
 
   return(p)
@@ -84,7 +84,7 @@ plot_heatmap <- function(f_cechaA, f_cechaB,
       labs(title = "",
            x = f_cechaA, y = f_cechaB,
            subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-           caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+           caption = "(c) Lukasz Prokulski, fb.com/DaneAnalizy")
   } else {
     plot_data %>%
       ggplot() +
@@ -94,7 +94,7 @@ plot_heatmap <- function(f_cechaA, f_cechaB,
       labs(title = "",
            x = f_cechaA, y = f_cechaB,
            subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-           caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+           caption = "(c) Lukasz Prokulski, fb.com/DaneAnalizy")
   }
 }
 
@@ -127,5 +127,5 @@ plot_bars_top <- function(f_cechaA, f_cechaB, n_col = 4) {
     labs(title = paste0("Najpopularniejsze ", f_cechaA, " według ", f_cechaB),
          x = f_cechaA, y = "% profili",
          subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl"),
-         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+         caption = "(c) Lukasz Prokulski, fb.com/DaneAnalizy")
 }

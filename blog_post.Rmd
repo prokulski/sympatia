@@ -10,6 +10,10 @@ output:
     self_contained: no
 ---
 
+Ponad 1/3 kobiet na Sympatii szuka miłości. Chce się zakochać, wyjść za mąż i mieć dzieci. Jest czuła i towarzyska. A w dodatku małżeństwo jest dla nich bardzo ważne.
+Ich partner powinien być czuły, romantyczny i dowcipny. Powinien lubić spędzać czas w restauracji a nie na karaoke czy w operze. Koniecznie musi lubić podróżować! Na chyba, że chodzi o przygodę - wówczas wystarczy dowcipny.
+
+
 Jakie są dziewczyny z Sympatii? Czego szukają?
 
 ```{r document_setup, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
@@ -51,7 +55,7 @@ Tym razem wpis z wykresami, a kody źródłowe znajdziecie na moim [GitHubie](ht
 * przygotowałem kilka funkcji rysujących poniższe wykresy
 * a teraz zrobimy przegląd zgromadzonych danych.
 
-A udało się zgromadzić **`r nprofiles`** profili (w wynikach wyszukiwania spełniających kryteria było ponad 40 tysięcy profili).
+Udało się zgromadzić **`r nprofiles`** profili (w wynikach wyszukiwania spełniających kryteria było ponad 40 tysięcy profili).
 
 Taka próba badawcza jest wystarczająca (z dużą górką) do rozciągania wniosków na całą populację. Ale uwaga - populację użytkowniczek Sympatii, a nie wszystkich kobiet w Polsce! **Pamiętajmy**, że nie każdy jest obecny na serwisie randkowym, nie należy więc uogólniać. Bardzo chętnie udostępnię *łamy* osobie z doświadczeniem w badaniach socjologicznych - być może (ba, zapewne!) mój komentarz do prezentowanych danych nie ma potwierdzenia w rzeczywistości. Ot, zrobiłem kilka wykresów i opisuję co na nich widzę i jak to rozumiem.
 
@@ -60,10 +64,59 @@ Taka próba badawcza jest wystarczająca (z dużą górką) do rozciągania wnio
 
 #### Skąd pochodzą dziewczyny?
 
+W pierwszym kroku sprawdźmy z jakich województw pochodzą kobiety mające swój profil na Sympatii.
+
 ```{r sympatia_01, echo=FALSE}
 plot_bars("Region", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Województwo z jakiego pochodzi właścicielka profilu", x = "")
 ```
+
+Nie dziwi dominacja mazowieckiego (i jeśli sięgnąć w szczegóły - Warszawy), w końcu tutaj mieszka najwięcej osób. Warto byłoby te dane zestawić z liczbą kobiet (w wybranym zakresie wiekowym) mieszkających w poszczególnych województwach. Sprawdźmy na danych z GUS (*Ludność wg pojedynczych roczników wieku i płci (dane półroczne)*, kobiety 18-40 lat, dane z końca 2017 roku):
+
+```{r sympatia_61, echo=FALSE}
+dane_sym <- inner_join(profile_df %>% filter(cecha == "Wiek"),
+                       profile_df %>% filter(cecha == "Region"),
+                       by = "nick") %>% 
+  count(wartosc.x, wartosc.y)
+
+dane_gus <- read_csv2("LUDN_3472_CREL_20180705111221.csv", col_types = "cccciiiccc")
+dane_gus <- dane_gus %>% 
+  mutate(Nazwa = tolower(Nazwa)) %>%
+  select(Nazwa, Wiek, Wartosc)
+
+dane_total <- inner_join(dane_gus,
+                         dane_sym %>%
+                           mutate(wartosc.x = as.numeric(wartosc.x)),
+                         by = c("Nazwa" = "wartosc.y", "Wiek" = "wartosc.x")) %>% 
+  mutate(proc = 100*n/Wartosc)
+
+dane_total %>%
+  arrange(desc(Nazwa)) %>%
+  mutate(Nazwa = fct_inorder(Nazwa)) %>%
+  ggplot() +
+  geom_tile(aes(Wiek, Nazwa, fill = proc), show.legend = FALSE) +
+  geom_text(aes(Wiek, Nazwa, label = sprintf("%.2f%%", proc)), size = 2) +
+  scale_fill_distiller(palette = "RdYlGn") +
+  labs(title = "Jaka część kobiet ma profil na Sympatii?",
+       x = "Wiek", y = "",
+       subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl oraz danych GUS"),
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Widzimy, że z wiekiem przybywa kobiet mających profile na serwisie - jeśli nie udało się znaleźć miłości do 25-30 roku życia dziewczyny starają się zwiększyć swoje szanse sięgając po kolejne źródła nowych znajomości. Tak można to wytłumaczyć.
+
+Ciekawe jest tutaj województwo mazowieckie, które odstaje od reszty kraju. Tutaj większa część (i to nawet 2-3 krotnie) kobiet korzysta z portalu randkowego niż w innych częściach kraju. Czy to wynik mieszkania w dużym mieście (bo trochę to mazowieckie trzeba traktować jako *głównie Warszawę*)? Zapewne.
+
+Mimo wszystko liczby nie napawają optymizmem szukających mężczyzn: jeśli masz 30 lat i szukasz kobiety w wieku 25-30 w (uprośćmy to) Warszawie to tylko jakieś 0.3% (trzy na tysiąc) *ogłasza* się na Sympatii. Nieco fantazjując:
+
+* jesteś facetem
+* codziennie mijasz 200 kobiet na ulicy (zakładamy, że każdego dnia jest to inna grupa)
+* 10 z nich podoba się Tobie
+* jednej z tych dziesięciu podobasz się Ty
+* tylko 3/1000 z tej kobiety ;-) jest na Sympatii
+* zatem musi minąć prawie cały rok, aż na ulicy miniesz tę pasującą (Ty jej i ona Tobie) z profilem w serwisie
+
+Czy zatem Sympatia (i inne tego typu serwisy) są pomocne? Wydaje się, że tak.
 
 #### W jakim są wieku?
 
@@ -72,6 +125,27 @@ plot_bars("Wiek", f_sort = FALSE, numbers = FALSE) +
    labs(title = "Wiek właścicielki profilu")
 ```
 
+To już wyszło wyżej - im dziewczyna starsza tym bardziej prawdopodobne, że będzie na Sympatii. To jest owo zwiększanie szans i próba ucieczki przed staropanieństwem ;)
+
+Porównajmy to z danymi GUS:
+
+```{r sympatia_62, echo = FALSE, fig.height = 4, fig.width = 9}
+dane_total %>%
+  group_by(Wiek) %>%
+  summarise(Wartosc = sum(Wartosc), n = sum(n)) %>%
+  ungroup() %>%
+  mutate(proc = 100*n/Wartosc) %>% 
+  ggplot() +
+  geom_col(aes(Wiek, proc), fill = "lightgreen", color = "gray50") +
+  labs(title = "Jaka część kobiet w określonym wieku ma profil na Sympatii?",
+                    x = "Wiek", y = "% kobiet w danym wieku,\nktóre mają profil na Sympatii",
+                    subtitle = paste("Na podstawie analizy", nprofiles, "profili z Sympatia.onet.pl oraz dane GUS"),
+                    caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Dane wyglądają podobnie, co też nie zaskakuje po dokładnym przeanalizowaniu wcześniejszego wykresu (heatmapy wiek-województwo).
+
+
 #### Spod jakiego znaku zodiaku?
 
 ```{r sympatia_03, echo=FALSE, fig.height = 4, fig.width = 9}
@@ -79,12 +153,20 @@ plot_bars("Znak zodiaku", f_sort = FALSE, numbers = FALSE) +
    labs(title = "Znak zodiaku właścicielki profilu", x = "")
 ```
 
+Jestem szczerze mówiąc zaskoczony. Sądziłem, że tutaj będzie płasko, bo mniej więcej równy powinien być podział ludzi pomiędzy znaki zodiaku. Ale pamiętacie mój (jeden z pierwszych) wpis o *[grudniowych dzieciach](/index.php/2017/02/23/grudniowe-dzieci/)*? Tam wyszło, że najwięcej dzieci rodzi się w lipcu i we wrześniu. Tylko jak to się ma do ryb? Może znak zodiaku jednak ma jakiś wpływ na charakter i co za tym idzie skłonność do skorzystania z serwisu randkowego?
+
+
 #### Czy są wolne czy z przeszłością?
+
+Jakie osoby korzystają z serwisu? Jaki jest ich stan cywilny? Co ciekawe - nie da się w profilu wybrać *w związku*...
 
 ```{r sympatia_04, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Stan cywilny", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Stan cywilny właścicielki profilu", x = "")
 ```
+
+Oczywiście panny stanowią nieco ponad 3/4 wszystkich użytkowniczek. Po to w sumie stworzono ten serwis, żeby panna mogła wyjść za mąż.
+
 
 #### Czy mają dzieci?
 
@@ -93,26 +175,40 @@ plot_bars("Dzieci") +
    labs(title = "Czy właścicielka profilu posiada dzieci?")
 ```
 
+To jest ciekawe - prawie 1/3 kobiet ma dzieci.
+
 #### Które mają dzieci?
 
-```{r sympatia_06, echo=FALSE, fig.height = 5, fig.width = 9}
+```{r sympatia_06, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_heatmap("Stan cywilny", "Dzieci") +
    labs(title = "Posiadanie dzieci a stan cywilny", x = "")
 ```
 
+Mniej ciekawa jest informacja o tym czy dzieci mają bardziej panny czy bardziej kobiety rozwiedzione (lub w separacji albo wdowy). Jak można się domyślać *panna z dzieckiem* jest w mniejszości (a i tak jest to co dziesiąta panna na portalu).
+
+
 #### Jakie mają wykształcenie?
+
+Czy z serwisu korzystają osoby lepiej wykształcone czy mniej?
 
 ```{r sympatia_07, echo=FALSE}
 plot_bars("Wykształcenie", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Wykształcenie właścicielki profilu", x = "")
 ```
 
+Te liczby warto porównać z danymi o podziale całej populacji ze względu na poziom wykształcenia. Inna sprawa, że osoby o wyższym wykształceniu są z reguły bardziej świadome możliwości i pewnie też bardziej skłonne do korzystania z *nowinek technicznych* (portale randkowe to już nie taka nowinka...).
+
+
 #### Co robią?
+
+Czym zajmują się dziewczyny z Sympatii?
 
 ```{r sympatia_08, echo=FALSE}
 plot_bars("Zawód", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Zawód właścicielki profilu", x = "")
 ```
+
+Nie wiemy co kryje się pod hasłem *inny...*. Większość pracuje w biurze (*specjalista / wolny zawód* też według mnie się tutaj wlicza), usługach itp. Bezrobocie wśród kobiet na Sympatii to około 1%.
 
 #### Wyznanie
 
@@ -121,9 +217,12 @@ plot_bars("Wyznanie", f_flip = TRUE) +
    labs(title = "Deklarowane wyznanie właścicielki profilu", x = "")
 ```
 
+Wszystko zgadza się ze średnią krajową. Być może Polaków mówiących, że są katolikami jest mniej niż 92%, ale na pewno jest to dominująca religia w naszym kraju.
+
 
 ### Wygląd
 
+Z demografii przejdźmy do ciekawszych tematów - jak wyglądają dziewczyny?
 
 #### Jakiego są wzrostu?
 
@@ -132,7 +231,8 @@ plot_density("Wzrost") +
    labs(title = "Wzrost właścicielki profilu", x = "Wzrost w cm", y = "Gęstość prawdopodobieństwa")
 ```
 
-patrząc na rozkład widzimy, że połowa dzieczyn ma wzrost pomiędzy 164 a 170 cm, przy średniej (i jednocześnie medianie) 167 cm. Jedna czwarta jest wyższa niż 170 cm (albo niższa niż 164 cm)
+Mamy typowy rozkład normalny, ciekawe są te szpilki. Są one w miejscach 160, 165 i 170 cm - czyżby wynikały z zaokrąglenia przy wpisywaniu?
+
 
 ```{r sympatia_11, echo=FALSE}
 profile_df %>%
@@ -142,6 +242,9 @@ profile_df %>%
     summary()
 ```
 
+Patrząc na rozkład widzimy, że połowa dziewczyn ma wzrost pomiędzy 164 a 170 cm, przy średniej (i jednocześnie medianie) 167 cm. Jedna czwarta jest wyższa niż 170 cm (albo niższa niż 164 cm)
+
+
 #### Budowa ciała
 
 ```{r sympatia_12, echo=FALSE}
@@ -149,60 +252,91 @@ plot_bars("Budowa ciała", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Deklarowana budowa ciała właścicielki profilu", x = "")
 ```
 
-#### kolor oczu
+Przeważają (w sumie ponad 80%) to dziewczyny szczupłe i normalnie zbudowane - ani grube, ani chude. Dopiero na żywo okazuje się jak jest naprawdę...
+
+
+#### Kolor oczu
+
+Jaki jest najpopularniejszy słowiański kolor kobiecych oczu?
 
 ```{r sympatia_13, echo=FALSE}
 plot_bars("Kolor oczu", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Kolor oczu właścicielki profilu", x = "")
 ```
 
-#### kolor włosów
+Oczywiście niebieskie.
+
+A kolor włosów?
 
 ```{r sympatia_14, echo=FALSE}
 plot_bars("Kolor włosów", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Kolor włosów właścicielki profilu", x = "")
 ```
 
-#### kolor oczy - kolor włosów
+Najwięcej jest blondynek (ciemnych i jasnych - łącznie nieco ponad połowa). Bo *mężczyźni wolą blondynki* czy rzeczywiście tak jest? W każdym razie podział blond-nie blond jest mniej więcej równy.
+
+
+#### Kolor oczu a kolor włosów
+
+Czy niebieskookie blondynki to typowa kombinacja?
 
 ```{r sympatia_15, echo=FALSE}
 plot_heatmap("Kolor oczu", "Kolor włosów") +
    labs(title = "Popularność koloru włosów w zależności od koloru oczu")
 ```
 
-#### budowa ciałą w zależności od wzrostu
+Ten wykres wymaga komentarza i podpowiedzi jak go czytać. W kolumnach wartości sumują się do 100%, w rzędach już nie. Czyli biorąc pod uwagę oczy koloru piwnego 40% z ich posiadaczek ma włosy ciemno kasztanowe. Patrząc w drugą stronę dla jasnych blondynek największa szansa jest, że będą miały niebieskie oczy - ale wcale nie 34% z nich tak ma (tylko 51% - sprawdziłem). Mamy tutaj do czynienia z prawdopodobieństwem warunkowym, a tutaj *prawdopodobieństwo wystąpienia zdarzenia A przy jednoczesnym wystąpieniu zdarzenia B* **wcale nie musi być równe** *prawdopodobieństwu wystąpienia zdarzenia B przy jednoczesnym wystąpieniu zdarzenia A*. Takich wykresów jeszcze trochę będzie.
+
+
+#### Budowa ciała w zależności od wzrostu
+
+Porównajmy teraz budowę ciała i wzrost - czy osoby wyższe są bardziej *smukłe*?
 
 ```{r sympatia_16, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wzrost", "Budowa ciała", numbers = FALSE, a_numeric = TRUE) +
    labs(title = "Budowa ciała w zależności od wzrostu", x = "Wzrost w cm", y = "")
 ```
 
-#### budowa ciała - wiek
+Wykres podobnie jak poprzednio - podział na grupy występuje w ramach kolumny. Wcześniej widzieliśmy, że szczupłe i normalne dominują, tak więc i tutaj wynik jest podobny. Czerwone miejsca to zdecydowanie wartości odstające w pomiarach - po jednej dziewczynie o danym wzroście. Wniosków nie można wysnuć żadnych. Trzeba by ważyć i mierzyć panie, a nie ufać w to co wpiszą.
+
+#### Budowa ciała a wiek
+
+Sprawdźmy zatem czy można coś powiedzieć o zależności związanej z wiekiem. 
 
 ```{r sympatia_17, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wiek", "Budowa ciała", numbers = FALSE) +
    labs(title = "Budowa ciała w zależności od wieku właścicielki profilu", x = "Wiek", y = "")
 ```
 
+Również niewiele się dowiemy. Może tyle, że 18-latki są bardziej szczupłe niż dziewczyny starsze.
+
 
 ### Używki
 
+Jaki jest stosunek kobiet do używek?
 
-#### papierosy
+#### Papierosy
 
 ```{r sympatia_18, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Papierosy", numbers = FALSE) +
    labs(title = "Stosunek właścicielki profilu do papierosów", x = "")
 ```
 
-#### alkohol
+Papierosy wyszły z mody już dawno - 3/4 kobiet za nimi nie przepada. Lubi około 7.5% - tyle też pewnie pali.
+
+#### Alkohol
+
+Alkohol to trochę inna używka. Pytanie *czy lubisz alkohol?* może kojarzyć się z *czy lubisz pić wódkę co tydzień albo częściej?*. Stąd odpowiedzi
 
 ```{r sympatia_19, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Alkohol", numbers = FALSE) +
    labs(title = "Stosunek właścicielki profilu do alkoholu", x = "")
 ```
 
-#### papierosy - alkohol
+gdzie 3/4 *lubi okazjonalnie* niczego sensownego właściwie nie dają. Bo to znaczy że na randkę można iść na piwo albo kieliszek wina i dość? Czy też trzeba mieć od razu całą butelkę? A może okazja to tylko święta rodzinne?
+
+
+#### Jak łączą się papierosy i alkohol?
 
 ```{r sympatia_20, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Alkohol", "Papierosy") +
@@ -210,76 +344,43 @@ plot_heatmap("Alkohol", "Papierosy") +
         x = "Stosunek do alkoholu", y = "Stosunek do papierosów")
 ```
 
+Jak wiemy za papierosami znakomita większość nie przepada. Tak więc nie dziwią wyniki w podziale na grupy związane ze stosunkiem do alkoholu. Możemy powiedzieć, że jeśli ktoś lubi alkohol to na większą tolerancję na papierosy. Palenie w miejscach publicznych (knajpach, pubach) skończyło się kilka lat temu - ciekawe jak wcześniej wyglądałyby te wyniki?
+
 
 ### Rodzina i wartości
 
+#### Czy chce dzieci?
 
-#### dzieci
-
-```{r sympatia_21, echo=FALSE, fig.height = 4, fig.width = 9}
-plot_bars("Dzieci") +
-   labs(title = "Posiadanie dzieci przez właścicielki profilu", x = "Czy masz dzieci?")
-```
-
-#### chce dzieci
+Wiemy już jak wygląda rozkład dotyczący stanu cywilnego oraz posiadania dzieci. Sympatia w profilu pyta również o chęć posiadania dzieci:
 
 ```{r sympatia_22, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Chce dzieci", numbers = FALSE) +
    labs(title = "Chęć posiadania dzieci", x = "Czy chcesz mieć dzieci?")
 ```
 
-#### małżeństwo
+I nie ma tutaj nic zaskakującego - większość kobiet chce mieć dzieci.
+
+#### Małżeństwo
+
+Kolejne pytanie to stosunek do małżeństwa.
 
 ```{r sympatia_23, echo=FALSE, fig.height = 4, fig.width = 9}
 plot_bars("Małżeństwo", numbers = FALSE) +
    labs(title = "Stosunek do małżeństwa", x = "Małżeństwo jest dla mnie...")
 ```
 
-
-### Osobowość - sama o sobie
-
-
-#### osobowość
-
-```{r sympatia_24, echo=FALSE}
-plot_bars("Osobowość", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "Właścicielki profilu o sobie", x = "Jestem...")
-```
-
-#### szukam
-
-```{r sympatia_25, echo=FALSE}
-plot_bars("Szukam", f_flip = TRUE, numbers = FALSE) +
-   labs(title = "Czego szukają właścicielki profilu?", x = "Szukam...")
-```
-
-#### osobowość - alkohol
-
-```{r sympatia_26, echo=FALSE}
-plot_heatmap("Alkohol", "Osobowość") +
-   labs(title = "Osobowość w zależności od stosunku do alkoholu", x = "Alkohol...", y = "Jestem...")
-```
-
-#### szukam - alkohol
-
-```{r sympatia_27, echo=FALSE}
-plot_heatmap("Alkohol", "Szukam") +
-   labs(title = "Czego szuka właścicielka profilu a jej stosunek do alkoholu", x = "Alkohol...", y = "Szukam...")
-```
-
-Większość szuka miłości, co już wiemy. Ale ciekawostka jest tutaj inna: Kobiety, które lubią alkohol szukają mężczyzn (33% z nich) bardziej niż miłości (31% z nich). Widać równieź, że im bardziej kobiety nie lubią alkoholu tym bardziej szukają miłości. Różnice są o prawda na poziomie 2 punktów procentowych, więc wniosek jest nieco naciągany.
-
-### Poglądy
+Dla 70% dziewczyn małżeństwo to bardzo ważna sprawa. Taka odpowiedź na to pytanie według mnie nie jest równoznaczna z deklaracją *jestem tutaj po to, żeby znaleźć męża*. Ale o tym się jeszcze przekonamy.
 
 
-#### małżeństwo - dzieci
+Połączmy zatem informacje o dzieciach, małżeństwie, stanie cywilnym i wyznaniu ze sobą w różnych przekrojach.
 
 ```{r sympatia_28, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Dzieci", "Małżeństwo") +
    labs(title = "Stosunek do małżeństwa w zależności od posiadania dzieci", x = "Dzieci...", y = "Małżeństwo...")
 ```
 
-#### małżeństwo - chce dzieci
+Widać tutaj zależność: dziewczyny bezdzietne uważają, że małżeństwo jest bardzo ważne. Te z dziećmi już niekoniecznie. Gdyby spojrzeć na to jako na chęć znalezienia męża to nie powinno dziwić, że kobieta z dzieckiem jest raczej realistką i nie szuka męża. Może szuka partnera, ale finalnie małżeństwo jest nieważne (dla 47% kobiet z dziećmi obecnymi na portalu).
+
 
 ```{r sympatia_29, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Małżeństwo", "Chce dzieci") +
@@ -287,9 +388,8 @@ plot_heatmap("Małżeństwo", "Chce dzieci") +
         x = "Małżeństwo jest dla mnie...", y = "Czy chcę mieć dzieci?")
 ```
 
-Kobiety, dla których małżeństwo jest bardzo ważne chcą mieć dzieci (89% z nich). Te, które nie są zainteresowane małżeństwem nie są również zainteresowane posiadaniem dzieci.
+Kobiety, dla których małżeństwo jest bardzo ważne chcą mieć dzieci (89% z nich). Te, które nie są zainteresowane małżeństwem nie są również zainteresowane posiadaniem dzieci - szukają po prostu towarzystwa?
 
-#### małżeństwo - wyznanie
 
 ```{r sympatia_30, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wyznanie", "Małżeństwo") +
@@ -297,99 +397,162 @@ plot_heatmap("Wyznanie", "Małżeństwo") +
         x = "Deklarowane wyznanie", y = "Małżeństwo jest dla mnie...")
 ```
 
-#### małżeństwo - stan cywilny
+Tutaj mamy dość przewidywalny wynik. Czerwony kwadrat w środku to zapewne jednostkowy przypadek (Żydówek jest ogólnie mało, a być może większość z nich w profilu podaje *inne* jako wyznanie). Natomiast religie okołochrześcijaśnie to przywiązanie do rodziny i co za tym idzie duże znaczenie małżeństwa. Ciekawa jest lewa część wykresu - połowa ateistek uważa, że małżeństwo nie jest ważne. Co nie znaczy że go nie szanują, w ten sposób mogą upraszczać jakieś prawicowe media.
+
 
 ```{r sympatia_31, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Stan cywilny", "Małżeństwo") +
    labs(title = "Stosunek do małżeństwa a stan cywilny właścicielki profilu", x = "", y = "Małżeństwo jest dla mnie...")
 ```
 
-#### wyznanie - chce dzieci
+Tutaj po raz kolejny mamy potwierdzenie mitu czy może sposobu wychowania w naszej kulturze: kobieta powinna wyjść za mąż, urodzić dzieci, a rodzina jest największą wartością. U osób rozwiedzionych małżeństwo nie jest aż tak ważne (w końcu raz już to przeżyły - 55% rozwódek tak deklaruje).
+
 
 ```{r sympatia_32, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_heatmap("Wyznanie", "Chce dzieci") +
    labs(title = "Chęć posiadania dzieci a deklarowane wyznanie", x = "", y = "Chcę mieć dzieci?")
 ```
 
+Czerwone kwadraty znowu potwierdzają to co przeczytaliście wyżej.
+
+### Osobowość - sama o sobie
+
+Co nasze analizowane panie piszą o sobie? Jak się przedstawiają? Zaczyna robić się ciekawie!
+
+
+```{r sympatia_24, echo=FALSE}
+plot_bars("Osobowość", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Właścicielki profilu o sobie", x = "Jestem...")
+```
+
+Najwięcej (ale proszę zwrócić uwagę na skalę - maksima są w okolicy 10% wszystkich profili) jest dziewczyn czułych, romantycznych, towarzyskich. Ciekawe jest to, że samotniczki (1.5% wszystkich) są obecne (aktywnie - zebrane profile logowały się co najmniej raz w ciągu minionego miesiąca) na serwisie służącym szukaniu towarzystwa.
+
+**Czego szukają dziewczyny?** Jakie są motywacje do wypełnienia profilu i w ogóle do skorzystania z portalu?
+
+```{r sympatia_25, echo=FALSE}
+plot_bars("Szukam", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Czego szukają właścicielki profilu?", x = "Szukam...")
+```
+
+Miłość i mężczyźni - to najważniejsze. **Ponad 1/3 kobiet na Sympatii szuka miłości. Chce się zakochać, wyjść za mąż i mieć dzieci. Jest czuła i towarzystka. A w dodatku małżeństwo jest dla nich bardzo ważne.** Taki nam się rysuje obraz z dotychczas oglądanych danych.
+
+
+#### Osobowość a alkohol
+
+Sprawdźmy czy to się jakoś wiąże ze sobą:
+
+```{r sympatia_26, echo=FALSE}
+plot_heatmap("Alkohol", "Osobowość") +
+   labs(title = "Osobowość w zależności od stosunku do alkoholu", x = "Alkohol...", y = "Jestem...")
+```
+
+Te, które deklarują, że lubią alkohol są towarzyskie i czułe (po 10% z nich). Pozostałe są raczej czułe. Te, które nie lubią alkoholu są dodatkowo rozważne i spokojne.
+
+Gdyby spojrzeć na te dane odwrotnie to lubiące alkohol są beztroskie (9%), nieokiełznane (8%) i samotniczki (8%). Ma to sens. Najbardziej nie lubią alkoholu zaś przesądne (17% z nich) i ponownie samotniczki (17%). W każdej z grup najmniej jest oczywiście lubiących.
+
+#### Czego szukam a alkohol
+
+```{r sympatia_27, echo=FALSE}
+plot_heatmap("Alkohol", "Szukam") +
+   labs(title = "Czego szuka właścicielka profilu a jej stosunek do alkoholu", x = "Alkohol...", y = "Szukam...")
+```
+
+Większość szuka miłości, co już wiemy. Ale ciekawostka jest tutaj inna: **Kobiety, które lubią alkohol szukają mężczyzn** (33% z nich) nieco **bardziej niż miłości** (31% z nich). Widać również, że im bardziej kobiety nie lubią alkoholu tym bardziej szukają miłości. Różnice są co prawda na poziomie pojedynczych punktów procentowych, więc wniosek jest nieco naciągany.
+
 
 ### Jaka jestem - co robię i lubię robić?
 
+Pozostańmy przy opisie dziewczyn samych przez siebie.
 
-#### ja sport
 
 ```{r sympatia_33, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars("Ja Sport", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jakim sportem interesuje się właścicielka profilu?", x = "")
 ```
 
-#### ja czas wolny
+Jazda na rowerze jest bezkonkurencyjnie najchętniej uprawianą dziedziną sportu. Niewiele wymaga, jest prosta. Na drugim miejscu mamy fitness - pewnie stąd te szczupłe sylwetki.
 
 ```{r sympatia_34, echo=FALSE}
 plot_bars("Ja Czas wolny", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jak lubi spędzać czas wolny właścicielka profilu?", x = "")
 ```
 
-#### ja zainteresowania
+Dziewczyny są towarzyskie i najchętniej poszłyby z przyjaciółmi do kina. Albo posiedziały w domu z rodziną. Nie ma zbyt wielu zwolenniczek opery czy chodzenia do muzeów. Karaoke też nie pasuje do naszego kręgu kulturowego (jak to wygląda w Japonii?).
 
 ```{r sympatia_35, echo=FALSE}
 plot_bars("Ja Zainteresowania", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Czym interesuje się właścicielka profilu?", x = "")
 ```
 
-#### ja film
+Podróże i czytanie to najpopularniejsze zainteresowania. Tylko co to oznacza? Czytanie to pewnie fakt czytania książek, ale podróże?
+
 
 ```{r sympatia_36, echo=FALSE}
 plot_bars("Ja Film", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jakie filmy lubi właścicielka profilu?", x = "")
 ```
 
-#### ja muzyka
+Kino jest rozrywką i ma cieszyć. Gatunki niszowe widać jak na dłoni: filmy historyczne, musicale, wojenne czy westerny. Dziewczyny są duże, więc nie lubią też filmów animowanych, w szczególności mangi.
+
 
 ```{r sympatia_37, echo=FALSE}
 plot_bars("Ja Muzyka", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jaką muzykę lubi właścicielka profilu?", x = "")
 ```
 
+Znowu rozrywka - pop-papka nadawana w radio.
+
+Co ciekawe (nie ma tego na wykresach) 10% wśród podających w kategorii *jak lubisz spędzać czas wolny* operę wskazuje, że ulubioną muzyką jest pop. Zaś 9% mówi, że to muzyka klasyczna (i tak, to najwyższa wartość pomiędzy formami spędzania czasu wolnego).
+
+Te co lubią zakupy lubią przede wszystkim pop (14%), dance (12%) i disco (9%).
+
 
 ### Jaki powinien być partner? Co lubić?
 
-
-#### partner osobowość
+Zostawmy na chwilę dziewczyny, a sprawdźmy czego oczekują od partnerów.
 
 ```{r sympatia_38, echo=FALSE}
 plot_bars("Partner Osobowość", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jaki powinien być wymarzony partner?", x = "")
 ```
 
-#### partner sport
+Oczywiście zgodny z mitem: czuły, dowcipny, romantyczny i towarzyski. Zero zaskoczenia. Książę na białym koniu najlepiej.
+
 
 ```{r sympatia_39, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars("Partner Sport", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jaki sport powinien uprawiać wymarzony partner?", x = "")
 ```
 
-#### partner czas wolny
+Powinien jeździć na rowerze co nie dziwi, w końcu to nasz sport narodowy (przynajmniej na Sympatii). W dodatku pływać i chodzić na siłownię.
+
+#### A co powinien robić i czym się interesować?
 
 ```{r sympatia_40, echo=FALSE}
 plot_bars("Partner Czas wolny", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jak wymarzony partner powinien spędzać czas wolny?", x = "")
 ```
 
-#### partner zainteresowania
+Powinien chodzić do kina (na komedie! - będzie niżej) i... cała reszta w punkt jak nasze bohaterki.
 
 ```{r sympatia_41, echo=FALSE}
 plot_bars("Partner Zainteresowania", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Czym powinien się interesować wymarzony partner?", x = "")
 ```
 
-#### partner film
+Tutaj jest ciekawostka - gotowanie na drugim miejscu, czytanie czwarte (dla pań było to odpowiednio 3 i 2 miejsce). Czyli *fajnie, żeby facet gotował, bo ja nie lubię/nie umiem*?
+
+
+W kategoriach kulturalnych (**Muzyka** i **Film**) oczekiwania odpowiadają gustowi właścicielek profili:
+
 
 ```{r sympatia_42, echo=FALSE}
 plot_bars("Partner Film", f_flip = TRUE, numbers = FALSE) +
    labs(title = "Jakie filmy powinien lubić wymarzony partner?", x = "")
 ```
 
-#### partner muzyka
+
+
 
 ```{r sympatia_43, echo=FALSE}
 plot_bars("Partner Muzyka", f_flip = TRUE, numbers = FALSE) +
@@ -399,13 +562,18 @@ plot_bars("Partner Muzyka", f_flip = TRUE, numbers = FALSE) +
 
 ### Jaka jestem w zależności od...
 
+Sprawdźmy teraz czy cechy społeczne (stan cywilny, wykształcenie, posiadanie dzieci) mają jakiś wpływ na zainteresowania.
 
 #### Co mnie interesuje w zależności od tego czy mam dzieci?
+
+Poniższy wykres to niejako wybór najpopularniejszych wskazań z wykresu typu heatmapa. Każda z kategorii (kolumny na heatmapie) została podzielona na oddzielne mini-wykresy słupkowe, na których zostały tylko kategorie (wiersze na heatmapie) najpopularniejsze. Odpowiedzi mające najwięcej wskazań zostały wyróżnione.
 
 ```{r sympatia_44, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_bars_top("Ja Zainteresowania", "Dzieci") +
    labs(title = "Najpopularniejsze zainteresowania właścicielki profilu\nze względu na posiadanie dzieci", x = "")
 ```
+
+Być może to naciągany wniosek, ale posiadanie dzieci ogranicza nieco możliwości związane z podróżami - stąd delikatnie mniejszy odsetek lubiących podróże, szczególnie w góry (z lewego wykresu góry wypadły - miały mniej niż 8%).
 
 #### Czy stan cywilny ma wpływ na moje zainteresowania?
 
@@ -414,14 +582,18 @@ plot_heatmap("Stan cywilny", "Ja Zainteresowania") +
    labs(title = "Zainteresowania właścicielki profilu\nwedług jej stanu cywilnego", x = "", y = "Interesuje mnie...")
 ```
 
-#### ja zainteresowania - wykształcenie
+Ponieważ wszystkie dziewczyny lubią podróże, czytanie i gotowanie dużych różnic tutaj nie widać. Wdowy bardziej niż inne lubią spędzać czas w ogrodzie (7%) czy też przed TV (9%).
+
+#### Zainteresowania a wykształcenie
 
 ```{r sympatia_46, echo=FALSE}
 plot_bars_top("Ja Zainteresowania", "Wykształcenie") +
    labs(title = "Najpopularniejsze zainteresowania właścicielki profilu\nw zależności od jej wykształcenia", x = "")
 ```
 
-#### ja muzyka - wykształenie
+Pierwsza trójka (podróże, czytanie i gotowanie) są obecne stale, ale na przykład TV występuje przy najniższym wykształceniu (podstawowe i zawodowe). Podobnie zakupy występują tylko wśród dziewczyn o średnim wykształceniu (7% z nich).
+
+#### Muzyka a wykształenie
 
 ```{r sympatia_47, echo=FALSE}
 plot_heatmap("Wykształcenie", "Ja Muzyka", numbers = FALSE) +
@@ -429,7 +601,9 @@ plot_heatmap("Wykształcenie", "Ja Muzyka", numbers = FALSE) +
    labs(title = "Ulubiony gatunek muzyczny w zależności od wykształcenia\nwłaścicielki profilu", x = "Wykształcenie", y = "")
 ```
 
-#### ja film - wykształenie
+Widzimy dominację pop i dance, ale dance jest bardziej popularny wśród dziewczyn z wykształceniem zawodowym. Reszta preferuje pop. Różnice są na poziomie pojedynczych punktów procentowych. Rock jest popularny (ale nie najbardziej) wśród studentek i tych, które studia (nawet podyplomowe) skończyły.
+
+#### Film a wykształenie
 
 ```{r sympatia_48, echo=FALSE}
 plot_heatmap("Wykształcenie", "Ja Film") +
@@ -437,7 +611,11 @@ plot_heatmap("Wykształcenie", "Ja Film") +
    labs(title = "Ulubione filmy w zależności od wykształcenia\nwłaścicielki profilu", x = "Wykształcenie", y = "")
 ```
 
-#### ja muzyka - osobowość
+Komedie dominują, a u osób z wykształceniem zawodowym razem z komediami romantycznymi stanowią łącznie nawet 1/3 wskazań. Film dokumentalne mają najwięcej zwolenniczek wśród tych, które ukończyły studia podyplomowe.
+
+#### Osobowość a muzyka
+
+Jestem zdania, że muzyka którą lubimy odpowiada naszemu charakterowi (plus przefiltrowane to jest przez osłuchanie i znajomość gatunków muzycznych).
 
 ```{r sympatia_49, echo=FALSE}
 plot_heatmap("Osobowość", "Ja Muzyka", numbers = FALSE) +
@@ -445,33 +623,25 @@ plot_heatmap("Osobowość", "Ja Muzyka", numbers = FALSE) +
    labs(title = "Ulubiony gatunek muzyczny w zależności od charakteru\nwłaścicielki profilu", x = "", y = "")
 ```
 
-#### ja zainteresowania - osobowość
+Jedyna ciekawostka jaką tutaj widać to większa niż średnio atencja dla rocka u osób określających się jako samotniczki. Dziwne, że nieśmiałe nie lubią ballad rockowych a wolą pop (nawet bardziej niż inne).
 
-```{r sympatia_50, echo=FALSE}
-plot_heatmap("Osobowość", "Ja Zainteresowania", numbers = FALSE) +
-   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
-   labs(title = "Zainteresowania w zależności od charakteru\nwłaścicielki profilu", x = "", y = "")
-```
 
-#### ja czas wolny - stan cywiliny
-
-```{r sympatia_51, echo=FALSE, fig.height = 7, fig.width = 9}
-plot_bars_top("Ja Czas wolny", "Stan cywilny", n_col = 2) +
-   labs(title = "Najpopularniejszy sposób spędzania czasu wolnego\nprzez właścicielkę profilu w zależności\nod jej stanu cywilnego", x = "")
-```
-
-#### ja czas wolny - wykształcenie
+#### Czas wolny a wykształcenie
 
 ```{r sympatia_52, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_bars_top("Ja Czas wolny", "Wykształcenie", n_col = 2) +
    labs(title = "Najpopularniejszy sposób spędzania czasu wolnego\nprzez właścicielkę profilu w zależności\nod jej wykształcenia", x = "")
 ```
 
+To jest ciekawy wykres. W oczy rzucają się czerwone słupki, ale proszę zwrócić uwagę na długość wszystkich - niewiele się różnią. Biorąc pod uwagę tylko czerwone (ordynarnie stosując *cherry picking*) możemy powiedzieć, że w kinie spędzają czas te, które go mają - studentki (wykształcenie średnie, pomaturalne, licencjat i wyższe niepełne). Później przychodzi czas na przyjaciół (wyższe i podyplomowe, ale też podstawowe). Osoby z wykształceniem zawodowym spędzają czas z rodziną.
+
+Zwróćcie jednak uwagę na *zakupy* - występują tylko u dziewczyn z wykształceniem podstawowym i zawodowym.
+
 
 ### Co lubię ja i co powinien lubić partner?
 
+Czas na wisienkę na torcie - oczekiwania w stosunku do partnera przez pryzmat postrzegania własnej osoby.
 
-#### ja sport - partner sport
 
 ```{r sympatia_53, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_heatmap("Ja Sport", "Partner Sport", numbers = FALSE) +
@@ -480,7 +650,12 @@ plot_heatmap("Ja Sport", "Partner Sport", numbers = FALSE) +
         x = "Ulubiony sport właścicielki profilu", y = "Ulubiony sport wymarzonego partnera")
 ```
 
-#### ja czas wolny - partner czas wolny
+Nie ma tutaj nic szczególnego (i trochę z premedytacją to pokazuję) - jeśli coś lubię ja to i partner powinien to lubić. To widać na przekątnej. Poza tym wszyscy powinni lubić jazdę na rowerze.
+
+
+#### Czas wolny
+
+Tutaj jest już ciekawiej. Dominuje oczywiście kino (co wiem już z wcześniejszych wykresów), silna jest przekątna, ale...
 
 ```{r sympatia_54, echo=FALSE}
 plot_heatmap("Ja Czas wolny", "Partner Czas wolny") +
@@ -489,7 +664,9 @@ plot_heatmap("Ja Czas wolny", "Partner Czas wolny") +
         x = "Sposób spędzania wolnego czasu przez właścicielkę profilu", y = "Sposób spędzania wolnego czasu\nprzez wymarzonego partnera")
 ```
 
-#### osobowość - partner osobowość
+...widać też silną chęć do przebywania (z partnerem) w restauracjach (po 8-9% w każdej z kolumn). Dziewczyny nie chcą spędzać czasu z partnerem na karaoke (chyba że same to lubią), podobnie jest z operą.
+
+#### Osobowość
 
 ```{r sympatia_55, echo=FALSE}
 plot_heatmap("Osobowość", "Partner Osobowość", numbers = TRUE) +
@@ -498,54 +675,66 @@ plot_heatmap("Osobowość", "Partner Osobowość", numbers = TRUE) +
 ```
 
 
-Dziewczyny beztroskie nie chcą beztroskich partnerów (5% z nich chce), ale równocześnie nie szukają równowagi w postaci partnerów *zrównoważonych* (6% beztroskich kobiet wskazało cechę *zrównoważony* jako porządaną).
+Dziewczyny beztroskie nie chcą beztroskich partnerów (5% z nich chce), ale równocześnie nie szukają równowagi w postaci partnerów *zrównoważonych* (6% beztroskich kobiet wskazało cechę *zrównoważony* jako pożądaną).
+
+Nie chcą też (niezależnie od własnych cech) facetów dumnych, nieokiełznanych, nieśmiałych, przesądnych i upartych. Samotnik i wymagający też nie bardzo. *Facet to musi być facet:* czuły, dowcipny i romantyczny.
 
 
-#### ja zainteresowania - partner zainteresowania
+#### Zainteresowania
 
 ```{r sympatia_56, echo=FALSE, fig.height = 7, fig.width = 9}
 plot_heatmap("Ja Zainteresowania", "Partner Zainteresowania", numbers = FALSE) +
    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
    labs(title = "Czym powinien interesować się wymarzony partner\nw zależności od zainteresowania właścicielki profilu?",
-        y = "Porządane zainteresowania partnera", x = "Zainteresowania właścicielki profilu")
+        y = "Pożądane zainteresowania partnera", x = "Zainteresowania właścicielki profilu")
 ```
 
-Ogólnie rzecz biorąc każdy facet powinien się interesować podróżami. Cokolwiek by to nie znaczyło - oglądać National Geographic czy Travel Channel? A może (co bardziej prawdopodobne) wyjeżdżać i zwiedzać świat... razem z *właścicielką profilu*.
+Ogólnie rzecz biorąc każdy facet powinien się interesować podróżami. Cokolwiek by to nie znaczyło - oglądać National Geographic czy Travel Channel? A może (co bardziej prawdopodobne) wyjeżdżać i zwiedzać świat... razem z *właścicielką profilu*. Może też gotować (szczególnie jak ona lubi robić zakupy).
 
 
 ### Cechy partnera w zależności od mojej sytuacji
 
+#### Zainteresowania partnera a moje dzieci
 
-#### partner zainteresowania - dzieci
+Czy posiadanie dzieci zmienia to, czym powinien interesować się wymarzony partner?
 
 ```{r sympatia_57, echo=FALSE, fig.height = 5, fig.width = 9}
 plot_bars_top("Partner Zainteresowania", "Dzieci") +
-   labs(title = "Najbardziej porządane zainteresowania partnera w zależności\nod posiadania dzieci przez właścicielkę profilu", x = "")
+   labs(title = "Najbardziej pożądane zainteresowania partnera w zależności\nod posiadania dzieci przez właścicielkę profilu", x = "")
 ```
 
+Właściwie nie zmienia. Taniec i góry są jedyną znaczącą różnicą.
 
-#### partner zainteresowania - wykształcenie
+
+#### Zainteresowania partnera a wykształcenie dziewczyny
 
 ```{r sympatia_58, echo=FALSE}
 plot_bars_top("Partner Zainteresowania", "Wykształcenie") +
-   labs(title = "Najbardziej porządane zainteresowania partnera w zależności\nod wykształcenia właścicielki profilu", x = "")
+   labs(title = "Najbardziej pożądane zainteresowania partnera w zależności\nod wykształcenia właścicielki profilu", x = "")
 ```
 
-#### osobowość partnera w zależności od tego czego szukam
+Podróże w nieskończoność. Gra na instrumentach u kobiet z wykształceniem podstawowym jest intrygująca - żeby grał na gitarze czy śpiewał serenady?
+
 
 ```{r sympatia_59, echo=FALSE}
 plot_bars_top("Partner Osobowość", "Szukam", n_col = 3) +
-   labs(title = "Najbardziej porządane cechy partnera w zależności\nod celu poszukiwań partnera", x = "")
+   labs(title = "Najbardziej pożądane cechy partnera w zależności\nod celu poszukiwań partnera", x = "")
 ```
 
-Widzieliśmy już wcześniej, że najbardziej porządana przez kobiety cecha u mężczyzn to czułość. Ale te, które szukają przygód wolą facetów dowcipnych.
+Widzieliśmy już wcześniej, że najbardziej pożądana przez kobiety cecha u mężczyzn to czułość. Ale te, które szukają przygód wolą (delikatnie) facetów dowcipnych.
 
+**Czy to się zmienia z wiekiem?**
 
 
 ```{r sympatia_60, echo = FALSE}
 plot_heatmap("Wiek", "Partner Osobowość") +
-   labs(title = "Najbardziej porządane cechy partnera w zależności\nod wieku właścicielki profilu",
+   labs(title = "Najbardziej pożądane cechy partnera w zależności\nod wieku właścicielki profilu",
         x = "Wiek właścicielki profilu", y = "Partner powinien być...")
 ```
 
-Znowu - przede wszystkim czuły. Ale chęć posiadania romantycznego partnera mija z wiekiem (może nieznacznie - o około jeden punkt procentowy - ale widocznie). Najbardziej romantycznych partnerów porządają 20-latki (12% z nich, romantyzm to najważniejsza dla nich cecha). Im Kobieta starsza tym bardziej docenia zrównoważenie: 5% 18-latek vs 10% 37-latek.
+Znowu: przede wszystkim czuły. Ale chęć posiadania romantycznego partnera mija z wiekiem (może nieznacznie - o około jeden punkt procentowy - ale widocznie). Najbardziej romantycznych partnerów pożądają 20-latki (12% z nich, romantyzm to najważniejsza dla nich cecha). Im kobieta starsza tym bardziej docenia zrównoważenie: 5% 18-latek vs 10% 37-latek.
+
+
+Na dzisiaj to wszystko. Danych zgromadzonych jest odrobinę więcej, być może powstanie kolejny wpis. Tymczasem - jeśli Ci się podobało podziel się wpisem ze światem.
+
+Możesz też docenić autora **[stawiając kawę](https://www.paypal.me/prokulski/10pln)**. A jeśli Ty albo Twoje firma potrzebuje przygotowania jakieś analizy - zernikj na [odpowiednią stronę](/index.php/oferta/).
