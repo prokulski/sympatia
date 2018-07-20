@@ -1,0 +1,551 @@
+---
+title: "Faceci z Sympatii"
+author: "Łukasz Prokulski"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    fig_height: 6
+    fig_width: 9
+    fig_align: "center"
+    self_contained: no
+---
+
+Jacy są faceci z Sympatii? Czego szukają?
+
+Średnio jest to niebieskooki ciemny blondyn, 180 cm z Mazowsza, w 90% katolik o normalnej budowie ciała. Czuły, dowcipny, spokojny. Szuka kobiet i miłości. Lubi rower i piłkę nożną, wolny czas spędza w kinie z przyjaciółmi, interesuje się sportem i podróżami (książki po gotowaniu, ale przed komputerem). Lubi pop i rock, komedie i filmy akcji albo sensacyjne.
+
+Poprzednio [było o kobietach](/index.php/2018/07/06/dziewczyny-z-sympatii/), więc teraz o panach z Sympatii. *Na proźbę telewidzów.*
+
+```{r document_setup, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# chunks options
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE)
+options(knitr.table.format = "html") 
+
+# some better colours theme :)
+theme_set(theme_minimal() +
+             theme(plot.title = element_text(family = NULL, face = "bold", size = 18, color = "black"),
+                   plot.subtitle = element_text(family = NULL, face = "plain", size = 9, color = "black"),
+                   plot.caption = element_text(family = NULL, face = "italic", size = 9, color = "darkgray"),
+                   plot.background = element_rect(fill="#efefef", color="#aaaaaa"),
+                   panel.background = element_rect(fill = "white", color="black"),
+                   strip.text.x = element_text(face = "bold")))
+```
+```{r echo=FALSE}
+library(tidyverse)
+
+profile_df <- readRDS("grabed_profiles_men.RDS") %>% distinct() %>% filter(nchar(wartosc) != 0)
+
+# szukamy facetów powyżej 40 - to jakieś błędy
+ponad_40 <- profile_df %>% 
+  filter(cecha == "Wiek") %>% 
+  mutate(wartosc = as.numeric(wartosc)) %>%
+  filter(wartosc > 40) %>%
+  pull(nick)
+
+profile_df <- profile_df %>% filter(!nick %in% ponad_40)
+
+nprofiles <- length(unique(profile_df$nick))
+
+#### FUNKCJE RYSUJACE WYKRESY ----
+source("plots.R")
+```
+
+Udało się zgromadzić około **`r nprofiles`** tysięcy profili panów. W wynikach wyszukiwania spełniających kryteria było ponad 87 tysięcy profili. Dla przypomnienia kobiet było około połowę mniej.
+
+Co ciekawe - panowie od razu reagowali na wizyty robota. W ciągu pierwszych trzech godzin zbierania danych robot odwiedził jakieś 2500 męskich profili. Jakieś 150 właścicieli tych profili odwdzięczyło się odwiedzeniem profilu bota, robot dostał 4 wiadomości i 3 *oczka*. Po kolejnych godzinach i zebraniu 7 tysięcy profili bot miał już 700 re-wizyt, 9 wiadomości i 6 oczek. Dla porównania dla zebranych 11 tys. profili kobiet było około 500 rewizyt. Po zakończeniu zbierania danych i upływie kilku dni łącznie było prawie 2600 odwiedzin (czyli około 2100 od panów), 21 wiadomości i kilka oczek. Wśród wiadomości te najbardziej *przyjemne*:
+
+> Pedale ja szukam kobiety
+
+> Wypierdalaj z mojego profilu. Wyrzuciłeś już gnój smokowi.
+
+Czy też mój ulubieniec, 37 letni pan z Podlasia (wykształcenie zawodowe, pracownik fizyczny, szuka kobiet i miłości, w zainteresowaniach tylko TV):
+
+> Co ty kurwa wchodzisz na mój mój profil? Geje mnie nie nie interesują miewasz się więcej tu zaglądać pedale
+
+Otóż **miewam** się dobrze, ale już **nie ważę się** do pana zaglądać.
+
+
+Od pań nie było żadnej wiadomości i dwa oczka. Zamienne.
+
+
+### Cechy ogólne
+
+#### Skąd pochodzą panowie?
+
+Sprawdźmy z jakich województw pochodzą panowie mające swój profil na Sympatii.
+
+```{r sympatia_men_01, echo=FALSE}
+plot_bars("Region", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Województwo z jakiego pochodzi właściciel profilu", x = "")
+```
+
+Wyniki są analogiczne dla tych dotyczących kobiet i oczywiście mają związek z liczbą osób zamieszkujących poszczególne województwa.
+
+
+#### W jakim są wieku?
+
+```{r sympatia_men_02, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Wiek", f_sort = FALSE, numbers = FALSE) +
+   labs(title = "Wiek właściciela profilu")
+```
+
+Kształt wykresu jest bardzo podobny do odpowiednika dla pań, chociaż tutaj po 35 roku życia widzimy obniżenie słupków. W wersji *kobiecej* poziom od 35 do 40 lat był mniej więcej równy. Wniosek ogólny jest taki, że Sympatia to serwis na którym znajdziemy głównie osoby od 25 roku życia.
+
+
+#### Spod jakiego znaku zodiaku?
+
+```{r sympatia_men_03, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Znak zodiaku", f_sort = FALSE, numbers = FALSE) +
+   labs(title = "Znak zodiaku właściciela profilu", x = "")
+```
+
+Jest analogicznie do Pań - też najmniej jest skorpionów. Czy więc to wynika z charakteru, który (rzekomo) w jakiś sposób powiązany jest ze znakiem zodiaku? Ciekawe...
+
+
+#### Czy panowie są wolni czy z przeszłością?
+
+```{r sympatia_men_04, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Stan cywilny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Stan cywilny właściciela profilu", x = "")
+```
+
+Kawalerowie to 4/5 wszystkich męskich użytkowników Sympatii. Nieco więcej niż w przypadku panien. Nieco ponad co dziesiąty jest rozwodnikiem - u pań co piąta. Można wysnuć więc wniosek, że panowie dłużej pozostają kawalerami, a rozwódki chętniej korzystają z Sympatii.
+
+
+#### Czy mają dzieci?
+
+```{r sympatia_men_05, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Dzieci") +
+   labs(title = "Czy właściciel profilu posiada dzieci?")
+```
+
+12% panów ma dzieci - u kobiet było to 31%.
+
+#### Którzy mają dzieci?
+
+```{r sympatia_men_06, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_heatmap("Stan cywilny", "Dzieci") +
+   labs(title = "Posiadanie dzieci a stan cywilny", x = "")
+```
+
+Prawie żaden kawaler nie ma dziecka, a odsetek ojców w pozostałych stanach cywilnych jest nieco niższy niż w przypadku kobiet (tam było to 85-86%).
+
+#### Jakie mają wykształcenie?
+
+
+```{r sympatia_men_07, echo=FALSE}
+plot_bars("Wykształcenie", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Wykształcenie właściciela profilu", x = "")
+```
+
+Tutaj już widzimy różnice - mniej więcej tyle samo (po około 1/3 wszystkich zgromadzonych profili) jest panów z wyższym i średnim wykształceniem. W przypadku kobiet widać było wyraźną różnicę: z wyższym wykształceniem była ponad połowa, ze średnim niespełna 20%. Łącznie mamy podobną grupę, ale jednak mocno zróżnicowaną.
+
+Ciekawe jest też wykształcenie zawodowe - to trzecie w kolejności (z udziałem około 8%) u panów, u pań było przedostatnie, na poziomie 3%. Zatem na Sympatii mamy kobiety wykształcone lepiej od panów.
+
+
+#### Co robią?
+
+```{r sympatia_men_08, echo=FALSE}
+plot_bars("Zawód", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Zawód właściciela profilu", x = "")
+```
+
+Nie wiemy co kryje się pod hasłem *inny...*, ale jest ich najwięcej. Spodziewać się można, że po prostu panowie nie chcą podawać swojego zawodu. Zdecydowanie więcej mamy właścicieli i pracowników fizycznych w porównaniu z analogicznymi danymi dla kobiet.
+
+#### Wyznanie
+
+```{r sympatia_men_09, echo=FALSE}
+plot_bars("Wyznanie", f_flip = TRUE) +
+   labs(title = "Deklarowane wyznanie właściciela profilu", x = "")
+```
+
+Wszystko zgadza się ze średnią krajową (deklarowaną) i nie ma właściwie różnicy pomiędzy płciami. 90% obecnych (łącznie - pań i panów) na Sympatii to katolicy.
+
+
+### Wygląd
+
+Z demografii przejdźmy do ciekawszych tematów - jak wyglądają panowie?
+
+#### Jakiego są wzrostu?
+
+```{r sympatia_men_10, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_density("Wzrost") +
+   labs(title = "Wzrost właściciela profilu", x = "Wzrost w cm", y = "Gęstość prawdopodobieństwa")
+```
+
+Rozkład normalny jeszcze ładniejszy niż w przypadku kobiet, skupiony wokół średniej 180 cm. W przypadku kobiet widać było wyraźne szpilki, które uznaliśmy za zaokrąglenia do pełnych 5 cm. Tutaj też to mamy, ale mniej wyraźnie - być może mężczyźni są bardziej precyzyjni jeśli chodzi o podawanie długości swojego ciała? Podobno każdy centymetr ma znaczenie ;)
+
+
+```{r sympatia_men_11, echo=FALSE}
+profile_df %>%
+    filter(cecha == "Wzrost") %>%
+    mutate(wartosc = as.numeric(wartosc)) %>%
+    pull(wartosc) %>%
+    summary()
+```
+
+Połowa panów mieści się pomiędzy 176 a 185 cm.
+
+
+#### Budowa ciała
+
+```{r sympatia_men_12, echo=FALSE}
+plot_bars("Budowa ciała", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Deklarowana budowa ciała właściciela profilu", x = "")
+```
+
+Pań uważających się za szczupłe było 20% (i 55% *normalnych*). Panowie wolą napisać, że są muskularni ;)
+
+
+#### Kolor oczu
+
+```{r sympatia_men_13, echo=FALSE}
+plot_bars("Kolor oczu", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Kolor oczu właściciela profilu", x = "")
+```
+
+Oczywiście niebieskie - w końcu to Słowianie. Drugie w kolejności są piwne, a trzecie zielone. W przypadku kobiet było odwrotnie na drugim i trzecim miejscu.
+
+A kolor włosów?
+
+```{r sympatia_men_14, echo=FALSE}
+plot_bars("Kolor włosów", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Kolor włosów właściciela profilu", x = "")
+```
+
+Tutaj (w porównaniu z paniami) mamy ciekawą obserwację - jasny blond jest bardziej popularny u kobiet niż u mężczyzn. Ale to chyba ie powinno dziwić, taka jest słowiańska uroda.
+
+
+### Używki
+
+Jaki jest stosunek panów do używek?
+
+#### Papierosy
+
+```{r sympatia_men_15, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Papierosy", numbers = FALSE) +
+   labs(title = "Stosunek właściciela profilu do papierosów", x = "")
+```
+
+Ponownie (jak w poprzednim odcinku) widzimy, że papierosy wychodzą z mody - wysokości słupków są właściwie takie same dla panów jak i pań.
+
+#### Alkohol
+
+
+```{r sympatia_men_16, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Alkohol", numbers = FALSE) +
+   labs(title = "Stosunek właściciela profilu do alkoholu", x = "")
+```
+
+Tutaj jest delikatna różnica przy odpowiedzi *obojętny* - panowie są bardziej obojętni (około 21%) niż panie (jakieś 17%).
+
+### Rodzina i wartości
+
+#### Czy pan chce mieć dzieci?
+
+```{r sympatia_men_17, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Chce dzieci", numbers = FALSE) +
+   labs(title = "Chęć posiadania dzieci", x = "Czy chcesz mieć dzieci?")
+```
+
+Większość kobiet chciała mieć dzieci, ale w przypadku mężczyzn ta większość jest... większa :) To znaczy większy odsetek zgromadzonych profili męskich deklaruje chęć posiadania dzieci. Różnica jest na poziomie 10 punktów procentowych (na korzyść mężczyzn). Ciekawe czy równie chętnie będą się dziećmi zajmować. Albo czy mają równie silną potrzebę zasadzenia drzewa i zbudowania domu.
+
+#### Małżeństwo
+
+
+```{r sympatia_men_18, echo=FALSE, fig.height = 4, fig.width = 9}
+plot_bars("Małżeństwo", numbers = FALSE) +
+   labs(title = "Stosunek do małżeństwa", x = "Małżeństwo jest dla mnie...")
+```
+
+Znowu mamy właściwie identyczny rozkład. Połączmy informacje o dzieciach i małżeństwie:
+
+```{r sympatia_men_19, echo=FALSE, fig.height = 5, fig.width = 9}
+plot_heatmap("Dzieci", "Małżeństwo") +
+   labs(title = "Stosunek do małżeństwa w zależności od posiadania dzieci", x = "Dzieci...", y = "Małżeństwo...")
+```
+
+W przypadku kolumny *nie mam dzieci* jest tak samo. Ale ojcowie uważają małżeństwo za nieważne w ich życiu w 54% - dla matek było to 47%. Różnica ta odbija się na kategorii *bardzo ważne*, z której punkty procentowe przechodzą do *nieważne*. Zatem możemy chyba przyjąć, że dla kobiet ważniejsza jest pełna rodzina, oparta na małżeństwie.
+
+
+
+### Osobowość - sam o sobie
+
+Co panowie piszą o sobie?
+
+
+```{r sympatia_men_20, echo=FALSE}
+plot_bars("Osobowość", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "właściciel profilu o sobie", x = "Jestem...")
+```
+
+Najwięcej (ale proszę zwrócić uwagę na skalę - maksima są w okolicy 10% wszystkich profili) jest panów czułych, dowcipnych i spokojnych oraz ugodowych. No do rany przyłóż, co szczególnie widać to po wiadomościach jakie robot dostał od panów, których profil odwiedził...
+
+
+Jakie są motywacje do wypełnienia profilu i w ogóle do skorzystania z portalu wśród badanej próbki mężczyzn?
+
+```{r sympatia_men_21, echo=FALSE}
+plot_bars("Szukam", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Czego szukają właściciele profilu?", x = "Szukam...")
+```
+
+Analogicznie do profili kobiecych. Delikatna różnica to zamiana na pierwszych dwóch miejscach: panowie szukają **kobiet** i miłości, panie - **miłości** i mężczyzn.
+
+
+#### Osobowość a alkohol
+
+Sprawdźmy czy to się jakoś wiąże ze sobą:
+
+```{r sympatia_men_22, echo=FALSE}
+plot_heatmap("Alkohol", "Osobowość") +
+   labs(title = "Osobowość w zależności od stosunku do alkoholu", x = "Alkohol...", y = "Jestem...")
+```
+
+Panowie lubiący alkohol są przede wszystkim dowcipni i czuli. Tak samo jak ci, których stosunek do alkoholu jest obojętny. Nielubiący są bardziej spokojni, ugodowi.
+
+#### Czego szukam a alkohol
+
+```{r sympatia_men_23, echo=FALSE}
+plot_heatmap("Alkohol", "Szukam") +
+   labs(title = "Czego szuka właściciel profilu a jego stosunek do alkoholu", x = "Alkohol...", y = "Szukam...")
+```
+
+W poprzednim odcinku doszliśmy do wniosku, że **kobiety, które lubią alkohol szukają mężczyzn** (33% z nich) nieco **bardziej niż miłości** (31% z nich). Tutaj mamy identyczną sytuację, chociaż patrząc na ogół profili to panowie szukają (nieznacznie) bardziej kobiet niż miłości.
+
+
+### Jaki jestem - co robię i lubię robić?
+
+```{r sympatia_men_24, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_bars("Ja Sport", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jakim sportem interesuje się właściciel profilu?", x = "")
+```
+
+Jazda na rowerze jest bezkonkurencyjnie najchętniej uprawianą dziedziną sportu - zarówno wśród panów jak i wśród pań. Oczywistą jest wysoka pozycja piłki nożnej w powyższym zestawieniu. U pań drugi był fitness. Według mnie nie ma tutaj żadnego zaskoczenia.
+
+```{r sympatia_men_25, echo=FALSE}
+plot_bars("Ja Czas wolny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jak lubi spędzać czas wolny właściciel profilu?", x = "")
+```
+
+> Dziewczyny są towarzyskie i najchętniej poszłyby z przyjaciółmi do kina. Albo posiedziały w domu z rodziną.
+
+Tak było w poprzedniej części. Czy coś trzeba (oprócz płci) zmienić?
+
+
+```{r sympatia_men_26, echo=FALSE}
+plot_bars("Ja Zainteresowania", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Czym interesuje się właściciel profilu?", x = "")
+```
+
+Tutaj mamy ciekawostkę, że tak powiem, na poziomie intelektualnym (pamiętajcie o rozkładzie wykształcenia). U kobiet czytanie było na drugim miejscu niewiele odbiegając od zwycięskich podróży. Sport był czwarty. Telewizja, gry i komputery to druga połowa stawki.
+
+A tutaj sytuacja jest odmienna. Panowie wolą ruch (sport, podróże, góry) i rzeczy związane z komputerami (w tym gry). Malowanie to ostatnia sprawa, która interesuje mężczyzn (u kobiet było w połowie stawki - przed grami i komputerami).
+
+
+```{r sympatia_men_27, echo=FALSE}
+plot_bars("Ja Film", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jakie filmy lubi właściciel profilu?", x = "")
+```
+
+Kino jest rozrywką i ma cieszyć. W przypadku kobiet z naciskiem na cieszyć (bo komedie i komedie romantyczne), w przypadku mężczyzn - z naciskiem na rozrywką (bo komedie, ale też akcja i sensacja - pościgi i strzelanie). Panowie nie są fanami komedii romantycznych - na tej płaszczyźnie nie widzę porozumienia.
+
+
+```{r sympatia_men_28, echo=FALSE}
+plot_bars("Ja Muzyka", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jaką muzykę lubi właściciel profilu?", x = "")
+```
+
+Różnicy pomiędzy płciami dużej nie ma, ale u panów *rock* jednak nieco wyżej. To zapewne wynika z typowych różnic między płciami: w końcu gdzieś tam w środku mężczyzna jest bardziej *drapieżny* i stąd może nieco większe zamiłowanie do gitary elektrycznej i perkusji.
+
+
+### Jaka powinna być partnerka? Co lubić?
+
+Na poniższych wykresach cecha opisująca partnerkę jest w formie męskiej, bo jest to odpowiedź na pytanie (uniwersalne ze względu na płeć) *jaki powinien być Twój wymarzony partner?*.
+
+```{r sympatia_men_29, echo=FALSE}
+plot_bars("Partner Osobowość", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jaka powinna być wymarzona partnerka?", x = "")
+```
+
+> Oczywiście zgodny z mitem: czuły, dowcipny, romantyczny i towarzyski. Zero zaskoczenia. Książę na białym koniu najlepiej.
+
+O przepraszam, cytowałem. Księżniczka, nie książe.
+
+
+```{r sympatia_men_30, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_bars("Partner Sport", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jaki sport powinna uprawiać wymarzona partnerka?", x = "")
+```
+
+Powinna lubić to co facet, ot co.
+
+#### A co powinna robić i czym się interesować?
+
+```{r sympatia_men_31, echo=FALSE}
+plot_bars("Partner Czas wolny", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jak wymarzona partnerka powinna spędzać czas wolny?", x = "")
+```
+
+Znowu mamy symetrię: **partnerka powinna być taka jak ja**.
+
+```{r sympatia_men_32, echo=FALSE}
+plot_bars("Partner Zainteresowania", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Czym powinna się interesować wymarzona partnerka?", x = "")
+```
+
+To jest ciekawe - kobiety w drugiej kolejności podawały gotowanie jako oczekiwane zainteresowania wymarzonych mężczyzn. Panowie też oczekują gotowania. To **kto gotuje, a kto zmywa?**
+
+Z tym sportem to chyba będzie problem, bo jest poza pierwszą trójką zainteresowań podawanych przez panie.
+
+
+W kategoriach kulturalnych (**muzyka** i **film**) oczekiwania odpowiadają gustowi właścicieli profili:
+
+
+```{r sympatia_men_33, echo=FALSE}
+plot_bars("Partner Film", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jakie filmy powinna lubić wymarzona partnerka?", x = "")
+```
+
+
+```{r sympatia_men_34, echo=FALSE}
+plot_bars("Partner Muzyka", f_flip = TRUE, numbers = FALSE) +
+   labs(title = "Jaką muzykę powinna lubić wymarzona partnerka?", x = "")
+```
+
+
+### Jaka jestem w zależności od...
+
+Sprawdźmy teraz czy cechy społeczne (stan cywilny, wykształcenie, posiadanie dzieci) mają jakiś wpływ na zainteresowania.
+
+#### Czy stan cywilny ma wpływ na moje zainteresowania?
+
+```{r sympatia_men_35, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_heatmap("Stan cywilny", "Ja Zainteresowania") +
+   labs(title = "Zainteresowania właściciela profilu\nwedług jego stanu cywilnego", x = "", y = "Interesuje mnie...")
+```
+
+Wszyscy panowie lubią sport. Uprawiać czy oglądać? To jest pytanie. Wdowcy wolą gotować. Pamiętajcie, że mamy tutaj grupę panów deklarującą wiek do czterdziestki - to nie są emeryci. I z tego względu jest to ciekawe.
+
+#### Zainteresowania a wykształcenie
+
+```{r sympatia_men_36, echo=FALSE}
+plot_bars_top("Ja Zainteresowania", "Wykształcenie") +
+   labs(title = "Najpopularniejsze zainteresowania właściciela profilu\nw zależności od jego wykształcenia", x = "")
+```
+
+Już od pierwszych wykresów wiemy, że sport jest najbardziej lubianym zajęciem. Ale ciekawe są kolejne miejsca. TV pojawia się tylko u panów z wykształceniem zawodowym, podobnie jak wędkarstwo.
+
+
+#### Muzyka a wykształenie
+
+```{r sympatia_men_37, echo=FALSE}
+plot_heatmap("Wykształcenie", "Ja Muzyka", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Ulubiony gatunek muzyczny w zależności od wykształcenia\nwłaściciela profilu", x = "Wykształcenie", y = "")
+```
+
+Rock jest popularny (ale nie najbardziej) wśród studentów i tych, którzy studia (nawet podyplomowe) skończyli. Reszta w dużym uproszczeniu woli coś do czego można tupnąć nóżką.
+
+
+#### Film a wykształenie
+
+```{r sympatia_men_38, echo=FALSE}
+plot_heatmap("Wykształcenie", "Ja Film") +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Ulubione filmy w zależności od wykształcenia\nwłaściciela profilu", x = "Wykształcenie", y = "")
+```
+
+Sytuacja właściwie całkowicie analogiczna do preferencji kobiet, z jedną różnicą (którą widać było już wcześniej) - u panów filmy akcji zastępują komedie romantyczne.
+
+
+#### Czas wolny a wykształcenie
+
+```{r sympatia_men_39, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_bars_top("Ja Czas wolny", "Wykształcenie", n_col = 2) +
+   labs(title = "Najpopularniejszy sposób spędzania czasu wolnego\nprzez właściciela profilu w zależności\nod jego wykształcenia", x = "")
+```
+
+Każdy facet lubi spędzać czas w kinie (ciekawe, że niby lubimy sport i ruch, ale jego uprawianie ustępuje statystycznie rozrywce polegającej na siedzeniu w ciemnej sali i gapieniu się w ekran...). Tylko u studentów (niepełne wyższe) pojawia się spędzanie czasu w barach czy pubach. No tak, studia to właściwy ku temu czas.
+
+Nigdzie nie pojawiły się *zakupy* (były tylko u dziewczyn z wykształceniem podstawowym i zawodowym). Stereotyp mówiący o tym, że panowie za nimi nie przepadają wydaje się być prawdziwy.
+
+
+### Co lubię ja i co powinna lubić moja partnerka?
+
+Czyli oczekiwania w stosunku do partnerki przez pryzmat postrzegania własnej osoby.
+
+```{r sympatia_men_40, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_heatmap("Ja Sport", "Partner Sport", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Jaki sport powinna lubić partnerka w zależności\nod ulubionego sportu właściciela profilu?",
+        x = "Ulubiony sport właściciela profilu", y = "Ulubiony sport wymarzonej partnerki")
+```
+
+Jeśli coś lubię ja to i partnerka powinna to lubić, co widać na przekątnej. Poza tym wszyscy powinni lubić jazdę na rowerze.
+
+
+#### Czas wolny
+
+Tutaj jest już ciekawiej. Dominuje oczywiście kino, silna jest przekątna, ale...
+
+```{r sympatia_men_41, echo=FALSE}
+plot_heatmap("Ja Czas wolny", "Partner Czas wolny") +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "W jaki sposób partnerka powinna spędzać czas wolny\nw zależności od ulubionego sposobu spędzania tego czasu\nprzez właścicielkę profilu?",
+        x = "Sposób spędzania wolnego czasu przez właściciela profilu", y = "Sposób spędzania wolnego czasu\nprzez wymarzoną partnerki")
+```
+
+...widać też silną chęć do przebywania (z partnerem) w towarzystwie przyjaciół. Czyżby panowie potrzebowali większego towarzystwa? Coś w tym chyba jest.
+
+#### Osobowość
+
+```{r sympatia_men_42, echo=FALSE}
+plot_heatmap("Osobowość", "Partner Osobowość", numbers = TRUE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Jakich cech oczekuję od partnerki w zależności\nod mojego charakteru?", x = "Cechy właściciela profilu", y = "Cechy partnerki")
+```
+
+
+Partnerka naszego właściciela profilu na Sympatii powinna być czuła i dowcipna. Bez względu na to jaki jest właściciel. Trochę też romantyczna.
+
+#### Zainteresowania
+
+```{r sympatia_men_43, echo=FALSE, fig.height = 7, fig.width = 9}
+plot_heatmap("Ja Zainteresowania", "Partner Zainteresowania", numbers = FALSE) +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0)) +
+   labs(title = "Czym powinien interesować się wymarzona partnerka\nw zależności od zainteresowania właściciela profilu?",
+        y = "Pożądane zainteresowania partnerki", x = "Zainteresowania właściciela profilu")
+```
+
+Każda kobieta powinna interesować się podróżami. A jak właściciel lubi podróże albo góry to nawet bardziej. Nie zaszkodzi zainteresowanie sportem.
+
+
+### Cechy partnerki w zależności od mojej sytuacji
+
+
+#### Zainteresowania partnerki a wykształcenie faceta
+
+```{r sympatia_men_44, echo=FALSE}
+plot_bars_top("Partner Zainteresowania", "Wykształcenie") +
+   labs(title = "Najbardziej pożądane zainteresowania partnerki w zależności\nod wykształcenia właściciela profilu", x = "")
+```
+
+Sport w nieskończoność. Gdzieś już wyżej widzieliśmy, że TV pojawia się u osób z niższym wykształceniem - tutaj mamy podobnie.
+
+
+```{r sympatia_men_45, echo=FALSE}
+plot_bars_top("Partner Osobowość", "Szukam", n_col = 3) +
+   labs(title = "Najbardziej pożądane cechy partnerki w zależności\nod celu poszukiwań właściciela profilu", x = "")
+```
+
+Nawet jeśli mężczyzna na Sympatii szuka tylko przygody to z czułą partnerką. Jeśli nie szuka niczego (to po co jest na portalu?) ważniejszy jest dowcip.
+
+
+Na dzisiaj to wszystko. W planie mam kolejną część, tym razem porównującą oczekiwania i deklaracje obu stron. Czy na Sympatii są panowie, których szukają panie? 
+
+
+Tymczasem - jeśli Ci się podobało podziel się wpisem ze światem. Możesz też docenić autora **[stawiając kawę](https://www.paypal.me/prokulski/10pln)**.
