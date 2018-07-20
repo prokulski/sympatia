@@ -7,6 +7,8 @@ library(jsonlite)
 # login i hasło do serwisu
 # sympatia_login = "***"
 # sympatia_pass = "***"
+
+# moje dane zapisane w pliku
 load("sympatia_cred.Rda")
 
 base_url <- "https://sympatia.onet.pl"
@@ -44,7 +46,7 @@ while(offset < current_profile) {
     ## kraj: PL
     ## ostatnie logowanie: 1 miesiąc
     ## sortowanie po dacie ostatniego logowania
-    jump_to(paste0("https://sympatia.onet.pl/ajax-search-results.html/?params%5Bsex%5D=k&params%5BageRange%5D%5B%5D=18&params%5BageRange%5D%5B%5D=40&params%5Bcountry%5D:PL&params%5BlastLoginPeriod%5D=1month&params%5Bsort%5DloginDate&params%5BcurrentPage%5D=", no_page))
+    jump_to(paste0("https://sympatia.onet.pl/ajax-search-results.html/?params%5Bsex%5D=m&params%5BageRange%5D%5B%5D=18&params%5BageRange%5D%5B%5D=40&params%5Bcountry%5D:PL&params%5BlastLoginPeriod%5D=1month&params%5Bsort%5DloginDate&params%5BcurrentPage%5D=", no_page))
 
   # sprawdzić czy się udało pobrać JSONa czy coś innego
   if(search_results$response$headers$`content-type` == "application/json") {
@@ -93,7 +95,7 @@ profile_links_all <- unique(profile_links_all)
 # ile unikatowych?
 length(profile_links_all)
 
-saveRDS(profile_links_all, "profile_links_all.RDS")
+saveRDS(profile_links_all, "profile_links_all_men.RDS")
 
 
 #### POBRANIE ZAWARTOSCI PROFILU ----
@@ -258,11 +260,14 @@ get_profile_info <- function(f_profile_url) {
 
 # klasycznie:
 profiles_df <- tibble()
-start_i <- 1
+i <- 1
+
+
+
 
 
 # jak sie wypierdoli można zacząc z tego miejsca
-start_i <- i
+start_i <- i + 1
 
 for(i in start_i:length(profile_links_all)) {
   cat(paste0(i, " / ", length(profile_links_all), "\r"))
@@ -271,14 +276,21 @@ for(i in start_i:length(profile_links_all)) {
   profiles_df <- bind_rows(profiles_df, get_profile_info(profile_links_all[[i]]))
 
   # co 25 profili zapisujemy dane
-  if(i %% 25 == 0) saveRDS(profiles_df, "grabed_profiles.RDS")
+  if(i %% 25 == 0) saveRDS(profiles_df, "grabed_profiles_men.RDS")
 
   # chwile czekamy
   # Sys.sleep(0.5)
 }
 
+# liczba zebranych profili - potrzeba okolo 20 tys
+profiles_df %>% select(nick) %>% distinct() %>% nrow()
+
+
+
+
+
 
 #### ZAPISANIE WSZYSTKICH PROFILI ----
 
 # zapisujemy finalnie zebrane linki
-saveRDS(profiles_df, "grabed_profiles.RDS")
+saveRDS(profiles_df, "grabed_profiles_men.RDS")
