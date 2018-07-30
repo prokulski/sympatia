@@ -1,0 +1,412 @@
+---
+title: "Dziewczyny z Sympatii - część druga"
+author: "Łukasz Prokulski"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    fig_height: 5
+    fig_width: 8
+    fig_align: "center"
+    self_contained: no
+---
+
+Było już [o kobietach](/index.php/2018/07/06/dziewczyny-z-sympatii/) z Sympatii (i [o panach](/index.php/2018/07/20/chlopaki-z-sympatii/)), ale wszystko to było na podstawie informacji zawartych w profilu. Dzisiaj sięgniemy nieco głębiej.
+
+
+```{r document_setup, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# chunks options
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, echo = FALSE)
+options(knitr.table.format = "html") 
+
+# some better colours theme :)
+theme_set(theme_minimal() +
+            theme(plot.title = element_text(family = NULL, face = "bold", size = 18, color = "black"),
+                  plot.subtitle = element_text(family = NULL, face = "plain", size = 9, color = "black"),
+                  plot.caption = element_text(family = NULL, face = "italic", size = 9, color = "darkgray"),
+                  plot.background = element_rect(fill="#efefef", color="#aaaaaa"),
+                  panel.background = element_rect(fill = "white", color="black"),
+                  strip.text.x = element_text(face = "bold")))
+```
+
+Zbierając profile zebraliśmy też linki do zdjęć. Korzystając z microsoftowego [Cognitive services Face API](https://azure.microsoft.com/pl-pl/services/cognitive-services/face/) pobieramy cechy jakie udaje się rozpoznać na zdjęciach. Między innymi są to informacje o:
+
+* wieku
+* płci
+* okularach
+* kolorze włosów
+* emocjach jakie wyraża twarz, na przykład czy osoba na zdjęciu się uśmiecha
+
+W dużym uproszczeniu Face API to *bramka* do wytrenowanego modelu (zapewne sieci neuronowej). Wrzucamy zdjęcie, a w odpowiedzi dostajemy kilka parametrów, które są wynikiem *porównania* zdjęcia z tym czego sieć się nauczyła.
+
+Skrypt (jaki inne z tego cyklu) znajdziecie [na githubie](https://github.com/prokulski/sympatia/). Pobrałem tylko dane dla zdjęć pań, nie będzie odpowiednika tego samego wpisu dla panów.
+
+Zobaczmy co sztuczna inteligencja wyczytała ze zdjęć i jak to się ma do informacji podawanych w profilach przez ich właścicielki.
+
+Na początek **wiek**.
+
+```{r sympatia_faces_01}
+library(tidyverse)
+
+face_df <- readRDS("face_api.RDS")
+women_df <- readRDS("grabed_profiles_women.RDS")%>% distinct() %>% filter(nchar(wartosc) != 0)
+# korekty wpisanych regionów
+women_df[(women_df$cecha == "Region") & (women_df$wartosc == "pila "), "wartosc"] <- "wielkopolskie"
+women_df[(women_df$cecha == "Region") & (women_df$wartosc == "Bielsko-Biała "), "wartosc"] <- "śląskie"
+
+# Cechy z zdjęc
+## wiek deklarowany vs wiek ze zdjecia
+wiek_porownanie <- left_join(face_df,
+                             women_df %>%
+                               filter(cecha %in% c("Wiek", "Photo_URL")) %>%
+                               spread(cecha, wartosc) %>%
+                               filter(Photo_URL %in% face_df$Photo_URL),
+                             by = "Photo_URL") %>%
+  mutate(Wiek = as.numeric(Wiek))
+
+ggplot(wiek_porownanie, aes(Wiek, age)) +
+  geom_jitter(width = 0.25, alpha = 0.5, size = 0.2) +
+  geom_smooth( method = 'loess', formula = 'y ~ x', size = 2, se = FALSE) +
+  geom_abline(slope = 1, color = "red", alpha = 0.5) +
+  labs(x = "Wiek podany w profilu",
+       y = "Wiek rozpoznany ze zdjęciu (wg AI)",
+       title = "Wiek podany w profilu a wiek rozpoznany na zdjęciu",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+
+```
+
+Czerwona linia to punkt odniesienia (taki sam wiek w profilu jak na zdjęciu). Widzimy, że na zdjęciach panie wyglądają młodziej niż w rzeczywistości. Czy to oznacza, że *dobrze się trzymają* (taki słaby żart, wiem) czy może dają w profilach stare zdjęcia?
+
+
+Face API pozwala na rozpoznanie (z określonym prawdopodobieństwem) emocji osoby na zdjęciu. Sprawdźmy czy te emocje jakoś zmieniają się z wiekiem?
+
+```{r sympatia_faces_02, fig.height = 5, fig.width = 10}
+wiek_porownanie %>%
+  select(Wiek, starts_with("emotion_")) %>%
+  group_by(Wiek) %>%
+  summarise_all(mean) %>%
+  ungroup() %>%
+  gather("cecha", "val", -Wiek) %>%
+  mutate(cecha = gsub("emotion_", "", cecha),
+         val = 100*val) %>%
+  ggplot(aes(Wiek, val, color = cecha)) +
+  geom_point(show.legend = FALSE) +
+  geom_smooth(show.legend = FALSE, method = 'loess', formula = 'y ~ x') +
+  facet_wrap(~cecha, scales = "free_y", ncol = 4) +
+  labs(y = "",
+       title = "Emocje odczytane ze zdjęcia w zależności od wieku",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Poza *happines* i *neutral* mamy śladowe wartości, możemy je pominąć. Widzimy, że kobiety starsze przyjmują bardziej *szęśliwy* wyraz twarzy kosztem *neutalnego*. Mają świadomość, że wyglądają wówczas korzystniej? Tak można wnioskować z wykresów powyżej.
+
+Porównajmy tylko te dwie cechy (szczęście i neutralność):
+
+```{r sympatia_faces_03, fig.width = 8, fig.height = 5}
+wiek_porownanie %>%
+  select(Wiek, starts_with("emotion_")) %>%
+  group_by(Wiek) %>%
+  summarise_all(mean) %>%
+  ungroup() %>%
+  gather("cecha", "val", -Wiek) %>%
+  mutate(val = 100*val) %>%
+  filter(cecha %in% c("emotion_neutral", "emotion_happines")) %>%
+  ggplot(aes(Wiek, val, fill = cecha)) +
+  geom_col(position = position_fill(), color = "gray30") +
+  geom_hline(yintercept = 0.5) +
+  theme(legend.position = "bottom") +
+  labs(y = "", fill = "",
+       title = "Emocje odczytane ze zdjęcia w zależności od wieku:\nszczęście vs neutralność",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Możemy powiedzieć, że po dwudziestce kobiety wyglądają na zdjęciach na szczęśliwsze. Tak przynajmniej są rozpoznawane przez sztuczną inteligencję.
+
+Czy z wiekiem zmienia się kolor włosów?
+
+```{r sympatia_faces_04}
+wiek_porownanie %>%
+  filter(!is.na(hair_color)) %>%
+  count(Wiek, hair_color) %>%
+  ungroup() %>%
+  # procentowy udział w ramach wieku - żeby oderwać się od
+  group_by(Wiek) %>%
+  mutate(p = 100*n/sum(n)) %>%
+  ungroup() %>%
+  ggplot(aes(Wiek, p, color = hair_color)) +
+  geom_line(size = 1.5) +
+  theme(legend.position = "bottom") +
+    labs(y = "% profili", color = "Kolor włosów\nrozpoznany na zdjęciu",
+       title = "Popularność koloru włosów odczytanego ze zdjęcia\nw zależności od wieku",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Tutaj widzimy delikatny wzrost liczby (właściwie: udziału procentowego) blondynek po 30. Chodzi o zmianę koloru za pomocą farby? Tego nie wiemy, ale możemy sprawdzić kolor włosów deklarowany w profilu a ten rozpoznany na zdjęciu:
+
+```{r sympatia_faces_13, fig.width = 6, fig.height = 4}
+inner_join(face_df, women_df %>% filter(cecha %in% c("Kolor włosów", "Photo_URL")) %>%
+             spread(cecha, wartosc) %>%
+             filter(Photo_URL %in% face_df$Photo_URL) %>% 
+             set_names(c("nick", "Kolor_wlosow", "Photo_URL")),
+           by = "Photo_URL") %>% 
+  filter(!is.na(hair_color), !is.na(Kolor_wlosow)) %>% 
+  count(Kolor_wlosow, hair_color) %>% 
+  ggplot() +
+  geom_tile(aes(hair_color, Kolor_wlosow, fill = n), show.legend = FALSE, color = "gray50") +
+    geom_text(aes(hair_color, Kolor_wlosow, label = n), show.legend = FALSE) +
+  scale_fill_gradient(low = "#eeeeee", high = "#f03b20") + 
+  labs(x = "Kolor włosów rozpoznany na zdjęciu (wg AI)",
+       y = "Kolor włosów podany w profilu")
+```
+
+Tutaj (jak i poprzednio) w grę wchodzi sama fotografia, szczególnie oświetlenie. Można zrobić zdjęcie ciemnej blondynki tak, aby jej włosy wyglądały na brązowe (i to widać na wykresie - *ciemny blond* na osi Y i *brown* na osi X). Poza tym problemem jest liczba kategorii koloru włosów w Face API - jest ich mniej niż możliwości wyboru w profilu Sympatii. Możemy w dużym uproszczeniu przyjąć, że dla Face API *blond* to *jasny blond*, a *ciemny blond* to już nie blond.
+
+
+Widzieliśmy zmianę popularności koloru włosów z wiekiem, a co z okularami?
+
+```{r sympatia_faces_05, fig.height = 4, fig.width = 8}
+wiek_porownanie %>%
+  count(Wiek, glasses) %>%
+  ggplot() +
+  geom_col(aes(Wiek, n, fill = glasses),
+           position = position_fill(), color = "gray30") +
+  theme(legend.position = "bottom") +
+    labs(y = "", fill = "",
+       title = "Okulary a wiek",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+
+Znakomita większość kobiet nie posiada okularów na zdjęciach. Z wiekiem okularnic przybywa. Czy zamiłowanie do czytania ma jakiś związek z noszeniem okularów? Czy kobiety, które deklarują wśród zainteresowań czytanie książek częściej noszą okulary?
+
+```{r sympatia_faces_06, fig.height = 4, fig.width = 8}
+## te co czytają:
+czytajace <- women_df %>%
+  filter(cecha == "Ja Zainteresowania" & grepl("czytanie", wartosc)) %>%
+  pull(nick)
+
+czytanie_okulary <- bind_rows(
+  # czytajace
+  women_df %>%
+    filter(nick %in% czytajace & cecha == "Photo_URL") %>%
+    select(wartosc, nick) %>%
+    left_join(face_df, by = c("wartosc" = "Photo_URL")) %>%
+    filter(!is.na(faceId)) %>%
+    count(glasses) %>%
+    mutate(p = 100*n/sum(n)) %>%
+    select(-n) %>%
+    mutate(typ = "czytanie") %>%
+    spread(glasses, p),
+  # wszystkie
+  wiek_porownanie %>%
+    count(glasses) %>%
+    mutate(p = 100*n/sum(n)) %>%
+    select(-n) %>%
+    mutate(typ = "ogol") %>%
+    spread(glasses, p))
+
+czytanie_okulary  %>%
+  gather("okulary", "procent", -typ) %>%
+  ggplot(aes(okulary, procent, fill = typ)) +
+  geom_col(position = position_dodge(), color = "gray30") +
+  scale_fill_manual(values = c("czytanie" = "lightgreen", "ogol" = "lightblue"),
+                    labels = c("czytanie" = "Tak", "ogol" = "Wszystkie profile")) +
+    theme(legend.position =  c(.85, .8),
+        legend.margin = margin(6, 6, 6, 6),
+        legend.box.background = element_rect(fill = "white", colour = "black")) +
+  labs(y = "% profili", x = "", fill = "Czytanie książek",
+       title = "Czytanie książek w zainteresowaniach a okulary na zdjęciu",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Widać delikatne różnice, ale zobaczmy jeszcze liczby jakie stoją za słupkami:
+
+
+```{r}
+czytanie_okularytab <- t(czytanie_okulary) %>%
+  as.data.frame() %>%
+  rownames_to_column("typ") %>%
+  set_names(c("Okulary", "Czytające", "Wszystkie"))
+czytanie_okularytab <- czytanie_okularytab[-1, ]
+
+czytanie_okularytab %>%
+  mutate(`Czytające` = round(as.numeric(as.character(`Czytające`)), 2),
+         `Wszystkie` = round(as.numeric(as.character(`Wszystkie`)), 2)) %>%
+  kable(row.names = FALSE) %>%
+   kable_styling(bootstrap_options = c("hover", "responsive"),
+                 full_width = FALSE, position = "float_left") %>%
+  add_header_above(c(" " = 1, "% profili" = 2))
+```
+
+Widzimy delikatną różnicę - te czytające rzadziej na zdjęciach są bez okularów i jednocześnie częściej mają *reading glasses*. W przypadku okularów słonecznych prawie nie widać różnicy. Różnice są na tyle niewielkie, że nie wiem czy są istotne statystycznie (trzeba by to sprawdzić odpowiednim testem).
+
+
+Wróćmy do koloru włosów (tym razem tylko rozpoznanego na zdjęciu) i zestawmy go z cechą, jaką daje nam Face API - prawdopodobieństwem, że osoba na zdjęciu się uśmiecha (to nie jest to samo co *happines* użyte wcześniej).
+
+```{r sympatia_faces_07, fig.height = 5, fig.width = 8}
+ggplot(wiek_porownanie %>% filter(!is.na(hair_color)),
+       aes(hair_color, 100*smile)) +
+  geom_boxplot(color = "black", fill = "lightgreen") +
+  geom_jitter(width = 0.25, alpha = 0.2) +
+  labs(y = "Prawdopodobieństwo uśmiechu", x = "Kolor włosów rozpoznany na zdjęciu", 
+       title = "Uśmiech a kolor włosów",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Znaczące są pierwsze trzy słupki - tutaj mamy dużo danych (co widać po liczbie kropek). Widać przede wszystkim, że głównie mamy wartości skrajne (bliskie 0 i 100). Uśrednianie ich (pozioma kreska na słupkach to mediana) ma słabe uzasadnienie, ale możemy się tak zabawić. Widać zatem, że na zdjęciach uśmiecha się więcej kobiet z brązowymi (pamiętajcie, że tutaj wpada też *ciemny blond*) włosami.
+
+
+Czy posiadanie dzieci (i związane z tym zmęczenie ;) przenosi się na uśmiech na zdjęciach?
+
+```{r sympatia_faces_08, fig.height = 5, fig.width = 8}
+inner_join(face_df,
+           women_df %>%
+             filter(cecha %in% c("Dzieci", "Photo_URL")) %>%
+             spread(cecha, wartosc) %>%
+             filter(!is.na(Dzieci)),
+           by = "Photo_URL") %>%
+  ggplot(aes(Dzieci, 100*smile)) +
+  geom_boxplot(color = "black", fill = "lightgreen") +
+  geom_jitter(width = 0.25, alpha = 0.2) +
+  labs(y = "Prawdopodobieństwo uśmiechu", x = "Dzieci",
+       title = "Uśmiech na zdjęciu a posiadanie dzieci",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Wygląda na to, że ma. Powyższy wykres można przeczytać w następujący sposób: mamy nieco ponad 50% szans na to, że kobieta posiadająca dzieci uśmiechnie się na fotografii. Z kolei ta, która dzieci nie posiada uśmiechnie się w 75% przypadków.
+
+
+Czy ma to związek z wiekiem? Bo może starsze uśmiechają się rzadziej, ale częściej mają dzieci?
+
+```{r sympatia_faces_09}
+inner_join(face_df,
+           women_df %>%
+             filter(cecha %in% c("Dzieci", "Photo_URL", "Wiek")) %>%
+             spread(cecha, wartosc) %>%
+             filter(!is.na(Dzieci)),
+           by = "Photo_URL") %>%
+  mutate(Wiek = as.numeric(Wiek)) %>%
+  group_by(Wiek, Dzieci) %>%
+  summarise(smile = mean(smile)) %>%
+  ungroup() %>%
+  ggplot(aes(Wiek, 100*smile)) +
+  geom_point(aes(color = Dzieci), alpha = 0.6) +
+  geom_smooth(aes(color = Dzieci), size = 2, se = FALSE, method = 'loess', formula = 'y ~ x') +
+  theme(legend.position =  c(.92, .15),
+        legend.margin = margin(6, 6, 6, 6),
+        legend.box.background = element_rect(fill = "white", colour = "black")) +
+  labs(y = "Prawdopodobieńswo uśmiechu", x = "Wiek", color = "Dzieci",
+       title = "Uśmiech na zdjęciu w zależności od wieku i posiadania dzieci",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Znowu wychodzi nam, że te, które dzieci nie maja uśmiechają się częściej na zdjęciach. I to nie zależy od wieku (ale im starsze tym więcej się uśmiechają - mówię Wam, to marketing i jego świadomość :).
+
+
+Sprawdźmy teraz prawdopodobieństwo uśmiechu w zależności od województwa, z którego pochodzą kobiety.
+
+```{r sympatia_faces_10}
+inner_join(face_df,
+           women_df %>%
+             filter(cecha %in% c("Region", "Photo_URL")) %>%
+             spread(cecha, wartosc) %>%
+             filter(!is.na(Region)),
+           by = "Photo_URL") %>%
+  group_by(Region) %>%
+  filter(smile >= quantile(smile, 0.125), smile <= quantile(smile, 0.875)) %>%
+  mutate(m_smile = median(smile)) %>%
+  ungroup() %>%
+  arrange(m_smile) %>%
+  mutate(Region = fct_inorder(Region)) %>%
+  ggplot(aes(Region, 100*smile)) +
+  geom_boxplot(color = "black", fill = "lightgreen") +
+  geom_jitter(width = 0.25, alpha = 0.1) +
+  coord_flip() +
+  labs(y = "Prawdopodobieńswo uśmiechu", x = "",
+       title = "Uśmiech a województwo, z którego pochodzi\nwłaścicielka profilu",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Wygląda na to, że dziewczyny z okolic Olsztyna uśmiechają się na zdjęciach najczęściej. Najmniej (jakaś co ósma?) uśmiechają się mieszkanki podkarpackiego, więcej niż połowa kobiet z Opolszczyzny również się nie uśmiecha (na zdjęciach, według sztucznej inteligencji - pamiętajmy, że nie należy uogólniać).
+
+
+Czy cechy charakteru (podane w profilu jako osobowość właścicielki) mają wpływ na uśmiech na zdjęciu?
+
+```{r sympatia_faces_11}
+inner_join(face_df,
+           women_df %>%
+             filter(cecha %in% c("Osobowość", "Photo_URL")) %>%
+             spread(cecha, wartosc) %>%
+             set_names(c("nick", "Osobowosc", "Photo_URL")) %>%
+             filter(!is.na(Osobowosc)) %>%
+             separate_rows(Osobowosc, sep = ",") %>%
+             mutate(Osobowosc = trimws(Osobowosc)),
+           by = "Photo_URL") %>%
+  group_by(Osobowosc) %>%
+  filter(smile >= quantile(smile, 0.125), smile <= quantile(smile, 0.875)) %>%
+  mutate(m_smile = median(smile)) %>%
+  ungroup() %>%
+  arrange(m_smile) %>%
+  mutate(Osobowosc = fct_inorder(Osobowosc)) %>%
+  ggplot(aes(Osobowosc, 100*smile)) +
+  geom_boxplot(color = "black", fill = "lightgreen") +
+  geom_jitter(width = 0.25, alpha = 0.1) +
+  coord_flip() +
+  labs(y = "Prawdopodobieńswo uśmiechu", x = "", fill = "Czytanie książek",
+       title = "Osobowość podana w proflu właścicielki",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Tutaj mamy dość prawdopodobne wyniki - najwięcej uśmiechają się kobiety spontaniczne, beztroskie i towarzyskie. Najmniej - samotniczki. Może właśnie po to są na Sympatii, żeby przestać być samotnymi i uśmiechać się więcej?
+
+
+Na koniec sprawdźmy czy *muzykałagodzi obyczaje*, a może raczej jaki jej gatunek podany jako ulubiony ma wpływ na uśmiech. **Czego należy słuchać, żeby się uśmiechać?**
+
+```{r sympatia_faces_12}
+inner_join(face_df,
+           women_df %>%
+             filter(cecha %in% c("Ja Muzyka", "Photo_URL")) %>%
+             spread(cecha, wartosc) %>%
+             filter(!is.na(`Ja Muzyka`)) %>%
+             separate_rows(`Ja Muzyka`, sep = ","),
+           by = "Photo_URL") %>%
+  rename(muzyka = `Ja Muzyka`) %>%
+  group_by(muzyka) %>%
+  # odrzucamy skrajności - dość grubo, zostawiając 75% ze środka
+  filter(smile >= quantile(smile, 0.125), smile <= quantile(smile, 0.875)) %>%
+  mutate(m_smile = median(smile)) %>%
+  ungroup() %>%
+  arrange(m_smile) %>%
+  mutate(muzyka = fct_inorder(muzyka)) %>%
+  ggplot(aes(muzyka, 100*smile)) +
+  geom_boxplot(color = "black", fill = "lightgreen") +
+  geom_jitter(width = 0.25, alpha = 0.1) +
+  coord_flip() +
+  labs(y = "Prawdopodobieńswo uśmiechu", x = "", 
+       title = "Ulubiony gatunek muzyczny a uśmiech na zdjęciu",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl oraz MS Face API",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+Wygląda na to, że muzyka filmowa to klucz do dobrego samopoczucia. Mi osobiście muzyka filmowa kojarzy się z podniosłym nastrojem i jakąś pompatycznością - na pewno nie z radością (tutaj raczej reggae - trochę się to sprawdza).
+
+Najbardziej dołujący jest metal. Co ciekawe (i dziwne jednocześnie) - fanki disco czy dance uśmiechają się mniej niż fanki jazzu.
+
+
+Powyższe analizy to wynik jedynie rozpoznawania cech przez AI ze zdjęć oraz deklaracje podane w profilu. Czy można to traktować jako dane niepodważalne i prawdziwe? Z tym pytaniem pozostawiam Was do... następnej (już ostatniej) części. Porównamy (wreszcie) panie i panów - ich deklaracje i oczekiwania.
+
+

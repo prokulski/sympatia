@@ -62,9 +62,11 @@ ggplot(o_mnie_2, aes(len, Osobowosc)) +
 
 
 o_mnie_words <- o_mnie_2 %>%
-  select(-len) %>%
   unnest_tokens(words, o_mnie, token = "words") %>%
-  filter(!words %in% stop_words)
+  filter(!words %in% stop_words) %>%
+  filter(!words %in% c("www.youtube.com", "watch", "v", "amp", "x2f"))
+
+# tutaj trzeba zestemować słowa
 
 
 o_mnie_words %>%
@@ -77,3 +79,54 @@ o_mnie_words %>%
   coord_flip() +
   facet_wrap(~Osobowosc, scales = "free")
 
+
+o_mnie_biwords <- o_mnie_2 %>%
+  unnest_tokens(words, o_mnie, token = "ngrams", n = 2) %>%
+  # usuwamy spam typu yutube
+  filter(!words %in% c("www.youtube.com watch", "watch v", "amp x2f", "amp amp"))
+
+o_mnie_biwords %>%
+  count(Osobowosc, words) %>%
+  group_by(Osobowosc) %>%
+  top_n(10, n) %>%
+  ungroup() %>%
+  ggplot(aes(words, n)) +
+  geom_col() +
+  coord_flip() +
+  facet_wrap(~Osobowosc, scales = "free")
+
+
+o_mnie_triwords <- o_mnie_2 %>%
+  unnest_tokens(words, o_mnie, token = "ngrams", n = 3)
+
+
+# seks - u jakiej osobowości najwięcej?
+sex_words <- o_mnie_words %>%
+  filter(str_detect(words, "seks|sex")) %>%
+  count(Osobowosc, words, sort = T)
+
+sex_biwords <- o_mnie_biwords %>%
+  filter(str_detect(words, "seks|sex")) %>%
+  count(Osobowosc, words, sort = T)
+
+sex_triwords <- o_mnie_triwords %>%
+  filter(str_detect(words, "seks|sex")) %>%
+  count(Osobowosc, words, sort = T)
+
+
+sex_words %>%
+  filter(n > 1) %>%
+  ggplot() +
+  geom_point(aes(Osobowosc, words, size = n))
+
+
+sex_biwords %>%
+  filter(n > 1) %>%
+  ggplot() +
+  geom_point(aes(Osobowosc, words, size = n))
+
+
+sex_triwords %>%
+  filter(n > 1) %>%
+  ggplot() +
+  geom_point(aes(Osobowosc, words, size = n))
