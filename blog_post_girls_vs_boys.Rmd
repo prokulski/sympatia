@@ -1,0 +1,689 @@
+---
+title: "Symnpatia - porównanie pań i panów"
+author: "Łukasz Prokulski"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    fig_height: 7
+    fig_width: 8
+    fig_align: "center"
+    self_contained: no
+---
+
+Ostatnia część cyklu analizy informacji zebranych z profili serwisu randkowego Sympatia.pl - porównanie pan i panów.
+
+W poprzednich częściach:
+
+* było [o kobietach](/index.php/2018/07/06/dziewczyny-z-sympatii/) z Sympatii
+* a także [o kobietach przez pryzmat ich zdjęć profilowych](/index.php/2018/07/30/dziewczyny-z-sympatii-czesc-2/)
+* żeby było sprawiedliwie - było też [o mężczyznach](/index.php/2018/07/20/chlopaki-z-sympatii/)
+
+Dzisiaj porównamy panie i panów w różnych przekrojach, a także - co wydaje się być najciekawsze - zderzymy ze sobą deklaracje i oczekiwania obu stron. Właściwie jest to zestawienie tego, co widzieliśmy w pierwszych dwóch częściach ([o paniach](/index.php/2018/07/06/dziewczyny-z-sympatii/) i [o panach](/index.php/2018/07/20/chlopaki-z-sympatii/))
+
+
+```{r document_setup, echo=FALSE, message=FALSE, error=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# chunks options
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, echo = FALSE)
+options(knitr.table.format = "html") 
+
+# some better colours theme :)
+theme_set(theme_minimal() +
+            theme(plot.title = element_text(family = NULL, face = "bold", size = 18, color = "black"),
+                  plot.subtitle = element_text(family = NULL, face = "plain", size = 9, color = "black"),
+                  plot.caption = element_text(family = NULL, face = "italic", size = 9, color = "darkgray"),
+                  plot.background = element_rect(fill="#efefef", color="#aaaaaa"),
+                  panel.background = element_rect(fill = "white", color="black"),
+                  strip.text.x = element_text(face = "bold")))
+```
+```{r load_data}
+setwd("~/RProjects/Sympatia")
+
+library(tidyverse)
+# library(formattable)
+
+# some better colours theme :)
+theme_set(theme_minimal() +
+            theme(plot.title = element_text(family = NULL, face = "bold", size = 18, color = "black"),
+                  plot.subtitle = element_text(family = NULL, face = "plain", size = 9, color = "black"),
+                  plot.caption = element_text(family = NULL, face = "italic", size = 9, color = "darkgray"),
+                  plot.background = element_rect(fill="#efefef", color="#aaaaaa"),
+                  panel.background = element_rect(fill = "white", color="black"),
+                  strip.text.x = element_text(face = "bold")))
+
+
+#### wczytanie profili pań ----
+
+profile_df <- readRDS("grabed_profiles_women.RDS") %>% distinct() %>% filter(nchar(wartosc) != 0)
+
+# korekty wpisanych regionów
+profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "pila "), "wartosc"] <- "wielkopolskie"
+profile_df[(profile_df$cecha == "Region") & (profile_df$wartosc == "Bielsko-Biała "), "wartosc"] <- "śląskie"
+
+profile_women <- profile_df
+
+
+
+#### wczytanie profili panów ----
+
+profile_df <- readRDS("grabed_profiles_men.RDS") %>% distinct() %>% filter(nchar(wartosc) != 0)
+
+# szukamy facetów powyżej 40 - to jakieś błędy
+ponad_40 <- profile_df %>%
+  filter(cecha == "Wiek") %>%
+  mutate(wartosc = as.numeric(wartosc)) %>%
+  filter(wartosc > 40) %>%
+  pull(nick)
+
+profile_men <- profile_df %>% filter(!nick %in% ponad_40)
+
+profile_men[(profile_men$cecha == "Region") & (profile_men$wartosc == "Inowłódz"), "wartosc"] <- "łódzkie"
+
+
+# wyrównujemy liczbę profili - po prostu losowo z większej próbu (panowie) wybieramy tyle ile mamy kobiet
+
+# męskie nicki
+mens_nick <- unique(profile_men$nick)
+
+# losowo zostawiamy ich tyle ile mamy kobiecych nicków
+set.seed(123456)
+mens_nick <- sample(mens_nick, size = length(unique(profile_women$nick)))
+
+# zostawiamy proflile zoswaionych nicków
+#profile_men <- profile_men %>% filter(nick %in% mens_nick)
+
+# sprzątamy
+rm(profile_df, ponad_40, mens_nick)
+```
+
+
+Zacznijmy od sprawdzenia czy w danym województwie jest tyle samo profili kobiet i mężczyzn w konkretnym wieku. Czy jest tak, że gdzieś mamy więcej poszukujących nieco starszych panów, a gdzie indziej więcej młodszych kobiet?
+
+```{r sympatia_gb_01, fig.width = 10, fig.height = 7}
+# liczba profili wg województwa i wieku
+wiek_region <- full_join(
+  profile_women %>%
+    filter(cecha %in% c("Region", "Wiek")) %>%
+    spread(cecha, wartosc) %>%
+    count(Region, Wiek),
+  profile_men %>%
+    filter(cecha %in% c("Region", "Wiek")) %>%
+    spread(cecha, wartosc) %>%
+    count(Region, Wiek),
+  by = c("Region", "Wiek")) %>%
+  mutate(n_women = if_else(is.na(n.x), 0, as.numeric(n.x)),
+         n_men = if_else(is.na(n.y), 0, as.numeric(n.y)),
+         Wiek = as.numeric(Wiek)) %>%
+  select(-n.x, -n.y) %>%
+  group_by(Region) %>%
+  mutate(n_women = 100*n_women/sum(n_women),
+         n_men = 100*n_men/sum(n_men)) %>%
+  ungroup()
+
+wiek_region %>%
+  gather("plec", "liczba", 3:4) %>%
+  ggplot() +
+  geom_line(aes(Wiek, liczba, color = plec),
+            size = 1.5) +
+  scale_color_manual(values = c("n_women" = "#fb9a99", "n_men" = "#a6cee3"),
+                     labels = c("n_women" = "kobiety", "n_men" = "mężczyźni")) +
+  facet_wrap(~Region) +
+  theme(legend.position = "bottom") +
+  labs(title = "Profile według płci, w podziale na województwa i wiek właściciela profilu",
+       subtitle = sprintf("Współczynnik korelacji: %.2f\nNa podstawie profili kobiet i mężczyzn z Sympatia.pl", cor(wiek_region$n_women, wiek_region$n_men)),
+       fill = "", color = "",
+       x = "Wiek", y = "% profili z danego województwa",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+```
+
+```{r}
+wiek_region %>%
+  split(.$Region) %>%
+  map(~cor(.$n_men, .$n_women)) %>%
+  bind_rows() %>%
+  t() %>%
+  as.data.frame() %>%
+  rownames_to_column("Region") %>%
+  mutate(V1 = round(V1, 2)) %>% 
+  set_names(c("Województwo", "Współczynnik<br>korelacji")) %>% 
+  kable(row.names = FALSE, escape = FALSE) %>%
+  kable_styling(bootstrap_options = c("hover", "responsive", "condensed"), full_width = FALSE, position = "float_right")
+```
+
+W mazowieckim mamy sytuację idealną - taki sam rozkład według wieku. W innych województwach jest mniej więcej równo, a wahania są według mnie uzasadnione mniejszą liczbą mieszkańców województwa i co za tym idzie mniejszą próbą.
+
+Ciekawie wygląda opolskie (pik w okolicach 36-37 lat) oraz zachodniopomorskie (*niezrównoważona* górka u mężczyzn w wieku około 32 lat). Nie umiem powiedzieć z czego to wynika, być może to po prostu przypadek?
+
+Tabela obok pokazuje współczynnik korelacji dla wieku w poszczególnych grupach. Wszędzie właściwie widzimy silną korelację dodatnią, co potwierdza to co widać na wykresach: linie są zbieżne.
+
+```{r}
+#### liczba profili ze względu na cechę ----
+cechy_podzial <- function(f_cecha, numbers = FALSE) {
+  cechy <- full_join(
+    profile_women %>%
+      filter(cecha == f_cecha) %>%
+      count(wartosc) %>%
+      mutate(n = 100*n/sum(n)) %>%
+      rename(women = n),
+    profile_men %>%
+      filter(cecha == f_cecha) %>%
+      count(wartosc) %>%
+      mutate(n = 100*n/sum(n)) %>%
+      rename(men = n),
+    by = "wartosc")
+  # %>%
+  #   mutate(men = if_else(is.na(men), 0, men),
+  #          women = if_else(is.na(women), 0, women))
+  # 
+  if(numbers) cechy$wartosc <- as.numeric(cechy$wartosc)
+  
+  plot <- cechy %>%
+    gather("plec", "liczba", 2:3) %>%
+    ggplot() +
+    geom_col(aes(wartosc, liczba, fill = plec, color = plec),
+             position = position_dodge()) +
+    scale_fill_manual(values = c("women" = "#fb9a99", "men" = "#a6cee3"),
+                      labels = c("women" = "kobiety", "men" = "mężczyźni")) +
+    scale_color_manual(values = c("women" = "#e31a1c", "men" = "#1f78b4"),
+                       labels = c("women" = "kobiety", "men" = "mężczyźni")) +
+    theme(legend.position = "bottom") +
+    labs(title = paste0("Procent profili według płci, w podziale na ", f_cecha),
+         subtitle = sprintf("Współczynnik korelacji: %.2f\nNa podstawie profili kobiet i mężczyzn z Sympatia.pl",
+                            cor(cechy$women, cechy$men)),
+         x = "", y = "% profili", fill = "", color = "",
+         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy")
+  
+  if(!numbers) plot <- plot + coord_flip()
+  
+  return(plot)
+}
+```
+
+
+Zobaczmy jak wygląda rozkład profili kobiecych i męskich pomiędzy województwami - w których województwach jest najwięcej użytkowników i użytkowniczek Sympatii?
+
+```{r sympatia_gb_02}
+cechy_podzial("Region")
+```
+
+Widzieliśmy to już w poprzednich częściach - najwięcej jest tam, gdzie jest najwięcej mieszkańców. Być może pamiętacie z pierwszej części, gdzie wyszło że około 0.35% Polek ma profil na Sympatii (dodajmy dla uściślenia, że to aktywny profil, odwiedzany co najmniej raz w ciągu ostatniego miesiąca). Zakładając, że tak jest w każdym województwie widzimy, które województwa są najliczniejsze pod względem liczby mieszkańców.
+
+Ciekawe jest mazowieckie - tutaj mieszka nieco ponad 1/5 właścicielek profilu (a mniej niż 1/5 właścicieli). Dziewczyny w stolicy są bardziej chętne do poszukiwania znajomości przez internet? A może to boty, takie same jak mój zbierający dane?
+
+```{r sympatia_gb_03, fig.width = 8, fig.height = 6}
+cechy_podzial("Wykształcenie")
+```
+
+Kiedy analizowaliśmy profile panów wyszło nam (z porównania dwóch wpisów), że na Sympatii mamy więcej lepiej wykształconych kobiet niż mężczyzn. Tutaj widać to wprost.
+
+Z wykształceniem wyższym jest (na oko) jakieś 30% więcej kobiet niż mężczyzn (~52% do ~36% profili). Wykształcenie średnie ma prawie dwa razy więcej mężczyzn niż kobiet (~34% do ~19%), podobnie jest z zawodowym (~7% do ~3%).
+
+Przy głębszej analizie można sprawdzić rozkład wykształcenia po województwach.
+
+
+```{r sympatia_gb_04, fig.width = 8, fig.height = 6}
+cechy_podzial("Stan cywilny")
+```
+
+Mamy więcej kawalerów niż panien (*więcej* i *mniej* w niniejszym wpisie mówi o udziale wszystkich profili w całości; w liczbach bezwzględnych na pewno jest więcej panów, bo ich profili jest więcej, zarówno w samym serwisie jak i w zgromadzonych danych). Ale co ciekawe - więcej jest rozwódek niż rozwodników. Pamiętać należy, że zebrane są profile tylko z przedziału 18-40 lat.
+
+Z reguły (chyba - można to sprawdzić w danych GUS o małżeństwach) jest tak, że mężczyzna w związku małżeńskim jest starszy od kobiety (średnio pewnie ze trzy lata). I teraz załóżmy, że dochodzi do rozwodu w momencie kiedy kobieta ma 35 lat, a mężczyzna 38. Po na przykład dwóch latach *odpoczynku* ona szuka na Sympatii partnera, a on jeszcze nie. Kiedy on zacznie (o ile w ogóle oczywiście) to wypadnie poza 40. A ona już (jeszcze właściwie) wpada do naszego *worka* z danymi.
+
+Tłumaczenie może pokrętne i naciągane, ale czy nie jest logiczne? Pytanie czy ma potwierdzenie w liczbach. Trzeba przeanalizować w jakim wieku są rozwódki i rozwodnicy. Sprawdźmy więc szybko:
+
+```{r sympatia_gb_30, fig.width = 8, fig.height = 4}
+profile_men %>%
+  filter(cecha %in% c("Stan cywilny", "Wiek")) %>%
+  spread(cecha, wartosc) %>%
+  set_names(c("nick", "stan", "wiek")) %>% 
+  mutate(wiek = as.numeric(wiek)) %>%
+  na.omit() %>%
+  count(stan, wiek) %>% 
+  ggplot() +
+  geom_col(aes(wiek, n, fill = stan), position = position_fill(), color = "gray50", size = 0.1) +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), color = "red", alpha = 0.6) +
+  labs(title = "Stan cywilny mężczyn a wiek",
+       x = "Wiek", y = "Udział wśród profili mężczyzn",
+       fill = "",
+       subtitle = "Na podstawie profili mężczyzn z Sympatia.pl",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy") +
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_d(option = "A", direction = -1)
+```
+
+```{r sympatia_gb_31, fig.width = 8, fig.height = 4}
+profile_women %>%
+  filter(cecha %in% c("Stan cywilny", "Wiek")) %>%
+  spread(cecha, wartosc) %>%
+  set_names(c("nick", "stan", "wiek")) %>% 
+  mutate(wiek = as.numeric(wiek)) %>%
+  na.omit() %>%
+  count(stan, wiek) %>% 
+  ggplot() +
+  geom_col(aes(wiek, n, fill = stan), position = position_fill(), color = "gray50", size = 0.1) +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), color = "red", alpha = 0.6) +
+  labs(title = "Stan cywilny kobiet a wiek",
+       x = "Wiek", y = "Udział wśród profili kobiet",
+       fill = "",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy") +
+  theme(legend.position = "bottom") +
+  scale_fill_viridis_d(option = "A", direction = -1)
+```
+
+Coś jest na rzeczy z proponowanymi wnioskami. Swoją drogą: już po 34 roku życia mamy 1/4 rozwódek, a po 39 - połowę. Oczywiście z obecnych na Sympatii. Ale osoby w związkach małżeńskich raczej nie są obecne na tego typu serwisach. Przynajmniej w teorii. W liczbach tego na pewno nie zobaczymy, bo na Sympatii nie da się wybrać stanu cywilnego *żonaty* albo *mężatka*.
+
+
+```{r sympatia_gb_05}
+cechy_podzial("Zawód")
+```
+
+Jeśli chodzi o wykonywany (deklarowany) zawód to zdecydowanie więcej jest mężczyzn właścicieli i pracowników fizycznych. Kobiety przeważają wyraźnie w kategorii *pracownik biurowy* oraz *pracownik naukowy/nauczyciel*. 
+
+```{r sympatia_gb_33, fig.width = 8, fig.height = 5}
+profile_women %>%
+  filter(cecha %in% c("Zawód", "Wiek")) %>%
+  spread(cecha, wartosc) %>%
+  set_names(c("nick", "wiek", "stan")) %>% 
+  mutate(wiek = as.numeric(wiek)) %>%
+  na.omit() %>%
+  count(stan, wiek) %>% 
+  ggplot() +
+  geom_col(aes(wiek, n, fill = stan), position = position_fill(), color = "gray50", size = 0.1) +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), color = "red", alpha = 0.6) +
+  labs(title = "Zawód kobiet a wiek",
+       x = "Wiek", y = "Udział wśród profili kobiet",
+       fill = "",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy") +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7)) +
+  scale_fill_viridis_d(option = "A")
+```
+
+```{r sympatia_gb_32, fig.width = 8, fig.height = 5}
+profile_men %>%
+  filter(cecha %in% c("Zawód", "Wiek")) %>%
+  spread(cecha, wartosc) %>%
+  set_names(c("nick", "wiek", "stan")) %>% 
+  mutate(wiek = as.numeric(wiek)) %>%
+  na.omit() %>%
+  count(stan, wiek) %>% 
+  ggplot() +
+  geom_col(aes(wiek, n, fill = stan), position = position_fill(), color = "gray50", size = 0.1) +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), color = "red", alpha = 0.6) +
+  labs(title = "Zawód mężczyn a wiek",
+       x = "Wiek", y = "Udział wśród profili mężczyzn",
+       fill = "",
+       subtitle = "Na podstawie profili mężczyzn z Sympatia.pl",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy") +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7)) +
+  scale_fill_viridis_d(option = "A")
+```
+
+
+Rozbijając zawód na wiek w poszczególnych płciach zobaczymy, że do 24 roku życia przeważają studentki (jest ich ponad 50% dla każdego wieku), a po 37 roku panowie w prawie 1/5 do dyrektorzy i właściciele. Widzicie zależność? Zamożny dyrektor/właściciel przed czterdziestką i studentka, wszystko w dużych miastach. Niczego nie sugeruję...
+
+**Sprawdźmy cechy fizyczne** - jak bardzo jesteśmy do siebie podobni?
+
+```{r sympatia_gb_06, fig.width = 8, fig.height = 6}
+cechy_podzial("Budowa ciała")
+```
+
+Jeśli spojrzymy na budowę ciała to przeważają szczupłe panie nad szczupłymi panami. Panowie o wiele bardziej chwalą się tym, że są muskularni (bodaj 3 takie kobiety się trafiły).
+
+```{r sympatia_gb_07}
+cechy_podzial("Kolor oczu")
+```
+
+Kolor oczu mamy podobny, chociaż jestem skłonny stwierdzić, że panie o niebieskich oczach lubią powiedzieć, że ich oczy są zielone. Bo to takie sexy. Stąd ta różnica w obu kategoriach.
+
+```{r sympatia_gb_08}
+cechy_podzial("Kolor włosów")
+```
+
+Wygląda na to, że panowie mają ciemniejsze włosy. No i więcej jest łysych ;)
+
+**Co z używkami?** Która płeć więcej pali i pije?
+
+```{r sympatia_gb_09, fig.width = 8, fig.height = 5}
+cechy_podzial("Alkohol")
+```
+
+Podział wyrównany, prawie 100% zbieżność (korelacja 0.99).
+
+```{r sympatia_gb_10, fig.width = 8, fig.height = 5}
+cechy_podzial("Papierosy")
+```
+
+Zakładam, że obojętny stosunek do papierosów oznacza w domyśle *sam(a) palę*. Przy takim założeniu mamy więcej palaczy niż palaczek (suma *lubię* i *obojętny*). Współczynnik korelacji jest równy jeden, ale mamy tylko trzy punkty pomiarowe, więc to nie dziwi.
+
+```{r sympatia_gb_11, fig.width = 8, fig.height = 4}
+cechy_podzial("Chce dzieci")
+```
+
+To jest ciekawe - więcej panów niż pań chce mieć dzieci. Ale to łączy się z kolejnym przekrojem:
+
+```{r sympatia_gb_12, fig.width = 8, fig.height = 4}
+cechy_podzial("Dzieci")
+```
+
+gdzie więcej kobiet już ma dzieci. Przewiń w górę i sprawdź podział ze względu na stan cywilny. Pasuje?
+
+Pasuje, oczywiście. Tym bardziej, że dzieci ma co najmniej połowa kobiet (obecnych na Sympatii) w wieku powyżej 37 roku życia (dla wieku ponad 32 lata ma je co najmniej co czwarta):
+
+```{r sympatia_gb_34, fig.width = 8, fig.height = 4}
+profile_women %>%
+  filter(cecha %in% c("Dzieci", "Wiek")) %>%
+  spread(cecha, wartosc) %>%
+  set_names(c("nick", "stan", "wiek")) %>% 
+  mutate(wiek = as.numeric(wiek)) %>%
+  na.omit() %>%
+  count(stan, wiek) %>% 
+  ggplot() +
+  geom_col(aes(wiek, n, fill = stan), position = position_fill(), color = "gray50", size = 0.1) +
+  geom_hline(yintercept = c(0.25, 0.5, 0.75), color = "red", alpha = 0.6) +
+  labs(title = "Posiadanie dzieci przez kobiety a wiek",
+       x = "Wiek", y = "Udział wśród profili kobiet",
+       fill = "Dzieci:",
+       subtitle = "Na podstawie profili kobiet z Sympatia.pl",
+       caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy") +
+  theme(legend.position = "bottom", legend.text = element_text(size = 7)) +
+  scale_fill_viridis_d(option = "A")
+```
+
+
+```{r sympatia_gb_13}
+cechy_podzial("Wyznanie")
+```
+
+Nasza Polska rzymskokatolicka. Współczynnik korelacji nie istnieje, bo w niektórych kategoriach nie ma obu płci (judaizm i islam - gdzie mamy pojedyncze deklaracje).
+
+```{r sympatia_gb_14, fig.width = 8, fig.height = 4}
+cechy_podzial("Małżeństwo")
+```
+
+To jest ciekawe, ale nie zaskakuje jeśli przypomnimy sobie podział po stanie cywilnym. Dla panien i kawalerów małżeństwo jest bardzo ważne (sprawdź wyniki w części [pierwszej](/index.php/2018/07/06/dziewczyny-z-sympatii/) i [drugiej](/index.php/2018/07/20/chlopaki-z-sympatii/)). A że mamy mniej panien niż kawalerów - stąd powyższy układ.
+
+
+```{r sympatia_gb_15, fig.width = 8, fig.height = 4}
+cechy_podzial("Wzrost", numbers = TRUE)
+```
+
+To bardzo fajny i jednocześnie bardzo typowy rozkład. Zasadniczo kobiety są o około 10 cm niższe od mężczyzn. Obie płcie charakteryzuje normalny rozkład wzrostu. Książkowo wręcz (i dlatego to chciałem pokazać).
+
+```{r sympatia_gb_16, fig.width = 8, fig.height = 4}
+cechy_podzial("Wiek", numbers = TRUE)
+```
+
+Już z wykresów o wieku właścicielek i właścicieli profilów w podziale na województwa było to widać (linie były mocno zbieżne ze sobą). Tutaj mamy to samo, ale na ogóle profili (bez rejonizacji).
+
+```{r sympatia_gb_17}
+cechy_podzial("Znak zodiaku")
+```
+
+Podział po znakach zodiaku jest zbliżony. Nie znam się na astrologii, ale cały czas zastanawia mnie dlaczego liczby użytkowników z różnych znaków zodiaku nie są równe. Może ktoś z Was ma na to wytłumaczenie?
+
+
+**Deklaracje a oczekiwania** - to najciekawsza chyba część. Sprawdźmy czy to co deklaruje jedna płeć ma odzwierciedlenie w poszukiwaniach drugiej?
+
+```{r}
+#### deklaracje vs oczekiwania ----
+deklaracje_oczekiwania <- function(f_kategoria, f_cecha_women, f_cecha_men) {
+  cecha_women_typ <- if_else(str_sub(f_cecha_women, 1, 2) == "Ja", "deklaracje", "oczekiwania")
+  cecha_men_typ <- if_else(str_sub(f_cecha_men, 1, 2) == "Ja", "deklaracje", "oczekiwania")
+  
+  tab <- full_join(
+    # deklaracje kobiet
+    profile_women %>%
+      filter(cecha == f_cecha_women) %>%
+      select(-cecha) %>%
+      separate_rows(wartosc, sep = ",") %>%
+      filter(!is.na(wartosc)) %>%
+      mutate(wartosc = trimws(wartosc)) %>%
+      count(wartosc) %>%
+      rename(deklaracja=n),
+    # oczekiwania mężczyzn
+    profile_men %>%
+      filter(cecha == f_cecha_men) %>%
+      select(-cecha) %>%
+      separate_rows(wartosc, sep = ",") %>%
+      filter(!is.na(wartosc)) %>%
+      mutate(wartosc = trimws(wartosc)) %>%
+      count(wartosc) %>%
+      rename(oczekiwanie=n),
+    by = "wartosc") %>%
+    arrange(wartosc) %>%
+    # interesują nas procenty, a nie wartości bezwzględne
+    mutate(deklaracja = 100*deklaracja/sum(deklaracja),
+           oczekiwanie = 100*oczekiwanie/sum(oczekiwanie))
+  
+  tab %>%
+    gather("klucz", "liczba", 2:3) %>%
+    arrange(desc(wartosc)) %>%
+    mutate(wartosc = fct_inorder(wartosc)) %>%
+    ggplot() +
+    geom_col(aes(wartosc, liczba, fill = klucz, color = klucz),
+             position = position_dodge()) +
+    scale_fill_manual(values = c("deklaracja" = "#fb9a99", "oczekiwanie" = "#a6cee3"),
+                      labels = c("deklaracja" = paste0("kobiety (", cecha_women_typ, ")"),
+                                 "oczekiwanie" = paste0("mężczyzni (", cecha_men_typ, ")"))) +
+    scale_color_manual(values = c("deklaracja" = "#e31a1c", "oczekiwanie" = "#1f78b4"),
+                       labels = c("deklaracja" = paste0("kobiety (", cecha_women_typ, ")"),
+                                  "oczekiwanie" = paste0("mężczyzni (", cecha_men_typ, ")"))) +
+    coord_flip() +
+    theme(legend.position = "bottom") +
+    labs(title = paste0(f_kategoria, "\ndeklaracje ",
+                        if_else(cecha_women_typ == "deklaracje", "kobiet", "mężczyzn"),
+                        " a oczekiwania ",
+                        if_else(cecha_women_typ == "deklaracje", "mężczyzn", "kobiet")),
+         subtitle = sprintf("Współczynnik korelacji: %.2f\nNa podstawie profili kobiet i mężczyzn z Sympatia.pl",
+                            cor(tab$deklaracja, tab$oczekiwanie)),
+         caption = "(c) Łukasz Prokulski, fb.com/DaneAnalizy",
+         x = "", y = "% profili", fill = "", color = "")
+}
+```
+
+```{r sympatia_gb_18}
+deklaracje_oczekiwania("Zainteresowania", "Ja Zainteresowania", "Partner Zainteresowania")
+```
+
+Kobiety interesują się czytaniem, podróżami i gotowaniem. Niekoniecznie jednak oczekują tego od swoich partnerów. Nie interesują ich gry czy komputery, ale facet mógłby się na tym znać. Ma to sens - uzupełniajmy się.
+
+```{r sympatia_gb_19}
+deklaracje_oczekiwania("Zainteresowania", "Partner Zainteresowania", "Ja Zainteresowania")
+```
+
+Z kolei u mężczyzn sytuacja jest odwrotna i to też należy chyba zaliczyć na plus.
+
+```{r sympatia_gb_20}
+deklaracje_oczekiwania("Sposób spędzania czasu wolnego", "Ja Czas wolny", "Partner Czas wolny")
+```
+
+Kobiety lubią kino z przyjaciółmi i tego oczekują od mężczyzn. Normalna sprawa - jeśli mamy być partnerami to lubmy tak samo spędzać czas. Ale oczekiwanie od partnera spędzania wolnego czasu w muzeum, operze lub na karaoke jednocześnie nie deklarując, że samej się tego nie lubi... Hm...
+
+```{r sympatia_gb_21}
+deklaracje_oczekiwania("Sposób spędzania czasu wolnego", "Partner Czas wolny", "Ja Czas wolny")
+```
+
+Tutaj mamy podobną sytuację w przypadku opery czy karaoke. Dodatkowo mężczyzna bardziej oczekuje od kobiety zamiłowania do tańca czy teatru jednocześnie samemu tego nie lubiąc tak bardzo.
+
+W obu przypadkach mamy bardzo silną dodatnią korelację, na poziomie bliskim jedynki. Czyli deklaracje i wzajemne oczekiwania są bardzo zbieżne.
+
+```{r sympatia_gb_22}
+deklaracje_oczekiwania("Ulubiony gatunek filmu", "Ja Film", "Partner Film")
+```
+
+
+```{r sympatia_gb_23}
+deklaracje_oczekiwania("Ulubiony gatunek filmu", "Partner Film", "Ja Film")
+```
+
+Z filmem jest mniej więcej równo, różnice są typowe (chyba) dla płci - mężczyźni nie są fanami komedii romantycznych, bardziej wolą sensację, akcję (*żeby się działo*). Ale *pozwalają* lubić komedie romantyczne kobietom. 
+
+```{r sympatia_gb_24}
+deklaracje_oczekiwania("Ulubiony gatunek muzyczny", "Ja Muzyka", "Partner Muzyka")
+```
+
+```{r sympatia_gb_25}
+deklaracje_oczekiwania("Ulubiony gatunek muzyczny", "Partner Muzyka", "Ja Muzyka")
+```
+
+Z muzyką jest podobnie jak z filmem. Właściwie nie ma czego tutaj komentować.
+
+```{r sympatia_gb_26, fig.width = 8, fig.height = 9}
+deklaracje_oczekiwania("Ulubiony sport", "Ja Sport", "Partner Sport")
+```
+
+Tutaj mamy niezwyciężoną jazdę na rowerze. Ale również wyrozumiałość kobiet: nie oczekują od nas uprawiania fitnessu i tańca. Uff.
+
+```{r sympatia_gb_27, fig.width = 8, fig.height = 9}
+deklaracje_oczekiwania("Ulubiony sport", "Partner Sport", "Ja Sport")
+```
+
+Panowie z kolei kochają piłkę nożną (ale nie tak jak rower), jednak mniej niż połowa oczekuje tej miłości od swoich partnerek. Partnerka powinna uprawiać to co lubi i co wpływa na jej wygląd i zdrowie: fitness, taniec, gimnastyka, joga.
+
+Ciekawy jest windsurfing - prawie żaden (no mniej niż 1%) facet go nie uprawia, ale oczekiwania są około trzech razy większe. Podobnie jest z żeglarstwem.
+
+
+Na koniec zostały nam **cechy charakteru**. Jak każda z płci widzi siebie i jakie ma oczekiwania w stosunku do strony przeciwnej?
+
+```{r sympatia_gb_28}
+# Osobowość
+deklaracje_oczekiwania <- full_join(
+  # deklaracje kobiet
+  profile_women %>%
+    filter(cecha == "Osobowość") %>%
+    select(-cecha) %>%
+    separate_rows(wartosc, sep = ",") %>%
+    filter(!is.na(wartosc)) %>%
+    mutate(wartosc = trimws(wartosc)) %>%
+    count(wartosc) %>%
+    rename(deklaracja=n) %>%
+    mutate(wartosc_men = gsub("a$", "y", wartosc)) %>% 
+    mutate(wartosc_men = if_else(wartosc_men == "towarzysky", "towarzyski", wartosc_men)) %>%
+    mutate(wartosc_men = if_else(wartosc_men == "beztrosky", "beztroski", wartosc_men)) %>%
+    mutate(wartosc = paste0(wartosc, " / ", wartosc_men)) %>%
+    select(wartosc, deklaracja),
+  # oczekiwania mężczyzn
+  profile_men %>%
+    filter(cecha == "Partner Osobowość") %>%
+    select(-cecha) %>%
+    separate_rows(wartosc, sep = ",") %>%
+    filter(!is.na(wartosc)) %>%
+    mutate(wartosc = trimws(wartosc)) %>%
+    count(wartosc) %>%
+    rename(oczekiwanie=n, wartosc_men=wartosc) %>%
+    mutate(wartosc = gsub("y$", "a", wartosc_men)) %>%
+    mutate(wartosc = if_else(wartosc_men == "towarzyski", "towarzyska", wartosc)) %>%
+    mutate(wartosc = if_else(wartosc_men == "beztroski", "beztroska", wartosc)) %>%
+    mutate(wartosc = paste0(wartosc, " / ", wartosc_men)) %>%
+    select(wartosc, oczekiwanie),
+  by = "wartosc") %>%
+  arrange(wartosc) %>%
+  # interesują nas procenty, a nie wartości bezwzględne
+  mutate(deklaracja = 100*deklaracja/sum(deklaracja),
+         oczekiwanie = 100*oczekiwanie/sum(oczekiwanie))
+
+deklaracje_oczekiwania %>%
+  gather("klucz", "liczba", 2:3) %>%
+  arrange(desc(wartosc)) %>%
+  mutate(wartosc = fct_inorder(wartosc)) %>%
+  ggplot() +
+  geom_col(aes(wartosc, liczba, fill = klucz, color = klucz),
+           position = position_dodge()) +
+  scale_fill_manual(values = c("deklaracja" = "#fb9a99", "oczekiwanie" = "#a6cee3"),
+                    labels = c("deklaracja" = "kobiety (deklaracje)",
+                               "oczekiwanie" = "mężczyzni (oczekiwania)")) +
+  scale_color_manual(values = c("deklaracja" = "#e31a1c", "oczekiwanie" = "#1f78b4"),
+                     labels = c("deklaracja" = "kobiety (deklaracje)",
+                                "oczekiwanie" = "mężczyzni (oczekiwania)")) +
+  coord_flip() +
+  theme(legend.position = "bottom") +
+  labs(title = "Deklaracje a oczekiwania: osobowość",
+       subtitle = sprintf("Współczynnik korelacji: %.2f",
+                          cor(deklaracje_oczekiwania$deklaracja, deklaracje_oczekiwania$oczekiwanie)
+       ),
+       fill = "", color = "", x = "", y = "% profili"
+  )
+```
+
+Na pierwszy rzut oka widzimy podobne długości słupków, korelację 0.89 - całkiem sporo. Nie ma zaskoczenia przy cechach bez wątpienia pozytywnych: czuły, romantyczny, rozważny.
+
+Ale dla cech mniej pozytywnych już widać, że ich *posiadaczka* nie chce ich u swojego partnera. Bo jeśli sama jestem uparta (~6%) to niech mój partner taki nie będzie (może być dla ~1.5% kobiet). Podobnie z wymagającymi i nieśmiałymi. 
+Jeśli nie jestem aż tak bardzo zrównoważona (za zrównoważone uważa się ~4% kobiet) to niech już ten facet będzie (chce tego ~6% kobiet). Podobnie z cechą określoną przez portal jako *roztywkowa*.
+
+**Jak to wygląda z punktu widzenia panów?**
+
+```{r sympatia_gb_29}
+# Osobowość
+deklaracje_oczekiwania <- full_join(
+  # deklaracje kobiet
+  profile_women %>%
+    filter(cecha == "Partner Osobowość") %>%
+    select(-cecha) %>%
+    separate_rows(wartosc, sep = ",") %>%
+    filter(!is.na(wartosc)) %>%
+    mutate(wartosc = trimws(wartosc)) %>%
+    count(wartosc) %>%
+    rename(deklaracja=n) %>%
+    mutate(wartosc_men = gsub("y$", "a", wartosc)) %>% 
+    mutate(wartosc_men = if_else(wartosc_men == "towarzyski", "towarzyska", wartosc_men)) %>%
+    mutate(wartosc_men = if_else(wartosc_men == "beztroski", "beztroska", wartosc_men)) %>%
+    mutate(wartosc = paste0(wartosc, " / ", wartosc_men)) %>%
+    select(wartosc, deklaracja),
+  # oczekiwania mężczyzn
+  profile_men %>%
+    filter(cecha == "Osobowość") %>%
+    select(-cecha) %>%
+    separate_rows(wartosc, sep = ",") %>%
+    filter(!is.na(wartosc)) %>%
+    mutate(wartosc = trimws(wartosc)) %>%
+    count(wartosc) %>%
+    rename(oczekiwanie=n, wartosc_men=wartosc) %>%
+    mutate(wartosc = gsub("y$", "a", wartosc_men)) %>%
+    mutate(wartosc = if_else(wartosc_men == "towarzyski", "towarzyska", wartosc)) %>%
+    mutate(wartosc = if_else(wartosc_men == "beztroski", "beztroska", wartosc)) %>%
+    mutate(wartosc = paste0(wartosc_men, " / ", wartosc)) %>%
+    select(wartosc, oczekiwanie),
+  by = "wartosc") %>%
+  arrange(wartosc) %>%
+  # interesują nas procenty, a nie wartości bezwzględne
+  mutate(deklaracja = 100*deklaracja/sum(deklaracja),
+         oczekiwanie = 100*oczekiwanie/sum(oczekiwanie))
+
+deklaracje_oczekiwania %>%
+  gather("klucz", "liczba", 2:3) %>%
+  arrange(desc(wartosc)) %>%
+  mutate(wartosc = fct_inorder(wartosc)) %>%
+  ggplot() +
+  geom_col(aes(wartosc, liczba, fill = klucz, color = klucz),
+           position = position_dodge()) +
+  scale_fill_manual(values = c("deklaracja" = "#a6cee3", "oczekiwanie" = "#fb9a99"),
+                    labels = c("oczekiwanie" = "kobiety (oczekiwania)",
+                               "deklaracja" = "mężczyzni (deklaracje)")) +
+  scale_color_manual(values = c("deklaracja" = "#1f78b4", "oczekiwanie" = "#e31a1c"),
+                     labels = c("oczekiwanie" = "kobiety (oczekiwania)",
+                                "deklaracja" = "mężczyzni (deklaracje)")) +
+  coord_flip() +
+  theme(legend.position = "bottom") +
+  labs(title = "Deklaracje a oczekiwania: osobowość",
+       subtitle = sprintf("Współczynnik korelacji: %.2f",
+                          cor(deklaracje_oczekiwania$deklaracja, deklaracje_oczekiwania$oczekiwanie)
+       ),
+       fill = "", color = "", x = "", y = "% profili"
+  )
+```
+
+Bardzo podobnie (korelacja 0.89). Chociaż są pewne oczekiwania których nie rozumiem: nieśmiały (~1% mężczyzn) facet oczekuje nieśmiałej kobiety (~5% ogółu mężczyzn takich oczekuje), uparty (~1%) oczekuje upartej (~4%). Nieco mniej niż co dwudziesty (niespełna 5%) mężczyzna deklaruje że jest spokojny, ale spokojnych kobiet oczekuje więcej niż co dziesiąty (~8%). To mniej niż poszukiwania kobiety towarzyskich (~7% mężczyzn takich kobiet szuka).
+
+
+
+I to już wszystko w cyklu analizującym profile z Sympatii. Dla zainteresowanych: odpowiednie kody źródłowe i zgromadzone dane znajdziesz w [repozytorium na GitHubie](https://github.com/prokulski/sympatia).
+
+Tymczasem – jeśli Ci się podobało podziel się wpisem ze światem (odpowiednie guziczki poniżej). Wpadnij też na [Dane i Analizy na Facebooku](http://facebook.com/DaneAnalizy/) – tam więcej takich smaczków (szczególnie dla praktyków).
+
+Miło będzie jeśli docenisz trud autora **[stawiając dużą kawę](https://www.paypal.me/prokulski/10pln)**.
+A jeśli Ty albo Twoje firma potrzebuje przygotowania jakieś dedykowanej analizy – zerknij na [odpowiednią stronę](/index.php/oferta/).

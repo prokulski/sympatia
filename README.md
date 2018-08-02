@@ -7,7 +7,7 @@ Zawartość repo wykorzystana została w analizach opublikowanych [na blogu](htt
 * część I: [kobiety](http://prokulski.net/index.php/2018/07/06/dziewczyny-z-sympatii/)
 * część II: [mężczyźni](http://prokulski.net/index.php/2018/07/20/chlopaki-z-sympatii/)
 * część III: [co widać na zdjęciach kobiet](http://prokulski.net/index.php/2018/07/30/dziewczyny-z-sympatii-czesc-2)
-* część IV: deklaracje i oczekiwania (w przygotowaniu)
+* część IV: [deklaracje i oczekiwania](http://prokulski.net/index.php/2018/08/02/sympatia-porownanie-pan-i-panow/)
 
 
 # Do czego są odpowiednie pliki?
